@@ -109,7 +109,9 @@ def main():
     mp.set_start_method('spawn')
 
     from vision_processes import queues_in, finish_all_consumers, forward, manager
-    from datasets.dataset import MyDataset
+    # from datasets.dataset import MyDataset
+    from datasets import get_dataset
+
 
     batch_size = config.dataset.batch_size
     num_processes = min(batch_size, 50)
@@ -121,7 +123,9 @@ def main():
     else:
         queue_results_main = None
         queues_results = [None for _ in range(batch_size)]
+    
 
+    #Calling the forward function with the model name as Codex for Code Gen.
     codex = partial(forward, model_name='codex', queues=[queues_in, queue_results_main])
 
     if config.clear_cache:
@@ -133,8 +137,11 @@ def main():
         # log the prompt file
         wandb.save(config.codex.prompt)
 
+
+    print("Dataset Config: ", config.dataset)
     dataset = MyDataset(**config.dataset)
 
+    # prompt: ./prompts/chatapi.prompt 
     with open(config.codex.prompt) as f:
         base_prompt = f.read().strip()
 
@@ -155,6 +162,7 @@ def main():
     all_img_paths = []
     all_possible_answers = []
     all_query_types = []
+    all_captions = []
 
     with mp.Pool(processes=num_processes, initializer=worker_init, initargs=(queues_results,)) \
             if config.multiprocessing else open(os.devnull, "w") as pool:
@@ -165,18 +173,26 @@ def main():
 
                 # Combine all querys and get Codex predictions for them
                 # TODO compute Codex for next batch as current batch is being processed
-
+                
+                #ToDo PK: add caption colums in the queries.csv when the captions json is ready.
                 if not config.use_cached_codex:
-                    codes = codex(prompt=batch['query'], base_prompt=base_prompt)
+                    codes = codex(prompt=batch['query'], caption=batch['image_caption'], base_prompt=base_prompt)
 
                 else:
                     codes = codes_all[i * batch_size:(i + 1) * batch_size]  # If cache
 
                 # Run the code
                 if config.execute_code:
+                    print("Executing code...")
                     if not config.multiprocessing:
                         # Otherwise, we would create a new model for every process
                         results = []
+                        # print("Codes: ", codes)
+                        # print("Batch['sample_id']: ", batch['sample_id'])   
+                        # print("Batch['image']: ", batch['image'])
+                        # print("Batch['possible_answers']: ", batch['possible_answers'])
+                        # print("Batch['query']: ", batch['query'])
+
                         for c, sample_id, img, possible_answers, query in \
                                 zip(codes, batch['sample_id'], batch['image'], batch['possible_answers'], batch['query']):
                             result = run_program([c, sample_id, img, possible_answers, query], queues_in, input_type)
@@ -199,7 +215,10 @@ def main():
                 all_possible_answers += batch['possible_answers']
                 all_query_types += batch['query_type']
                 all_querys += batch['query']
+                all_captions += batch['image_caption']
+                # print("Image Caption: ", batch['image_caption'])
                 all_img_paths += [dataset.get_sample_path(idx) for idx in batch['index']]
+                # print("Batch Done...")
                 if i % config.log_every == 0:
                     try:
                         accuracy = datasets.accuracy(all_results, all_answers, all_possible_answers, all_query_types)
@@ -233,9 +252,9 @@ def main():
                 filename = 'results_' + str(max([int(ef.stem.split('_')[-1]) for ef in existing_files if
                                                  str.isnumeric(ef.stem.split('_')[-1])]) + 1) + '.csv'
         print('Saving results to', filename)
-        df = pd.DataFrame([all_results, all_answers, all_codes, all_ids, all_querys, all_img_paths,
+        df = pd.DataFrame([all_results, all_answers, all_codes, all_ids, all_querys, all_captions, all_img_paths,
                            all_possible_answers]).T
-        df.columns = ['result', 'answer', 'code', 'id', 'query', 'img_path', 'possible_answers']
+        df.columns = ['result', 'answer', 'code', 'id', 'query', 'image_caption', 'img_path', 'possible_answers']
         # make the result column a string
         df['result'] = df['result'].apply(str)
         df.to_csv(results_dir / filename, header=True, index=False, encoding='utf-8')

@@ -238,7 +238,7 @@ class ImagePatch:
         return self.left <= right and self.right >= left and self.lower <= upper and self.upper >= lower
 
     def llm_query(self, question: str, long_answer: bool = True) -> str:
-        '''Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.
+        '''Answers a text question using GPT-3. The input question is always a formatted string with a variable in it. Only programs containing a formatted string as an input to llm_query are valid.
 
         Parameters
         ----------
@@ -336,4 +336,5 @@ Consider the following guidelines:
 - Use base Python (comparison, sorting) for basic logical operations, left/right/up/down, math, etc.
 - Use the llm_query function to access external information and answer informational questions not concerning the image.
 
+Caption: INSERT_CAPTION_HERE
 Query: INSERT_QUERY_HERE

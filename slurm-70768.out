@@ -1,0 +1,469 @@
++ module load cuda-11.8
++ _module_raw load cuda-11.8
++ unset _mlshdbg
++ '[' 0 = 1 ']'
++ unset _mlre _mlIFS
++ '[' -n x ']'
++ _mlIFS=' 	
+'
++ IFS=' '
++ for _mlv in ${MODULES_RUN_QUARANTINE:-}
++ '[' LD_LIBRARY_PATH = LD_LIBRARY_PATH -a LD_LIBRARY_PATH = LD_LIBRARY_PATH ']'
+++ eval 'echo ${LD_LIBRARY_PATH+x}'
++++ echo
++ '[' -n '' ']'
++ _mlrv=MODULES_RUNENV_LD_LIBRARY_PATH
+++ eval 'echo ${MODULES_RUNENV_LD_LIBRARY_PATH:-}'
++++ echo
++ _mlre='LD_LIBRARY_PATH='\'''\'' '
++ for _mlv in ${MODULES_RUN_QUARANTINE:-}
++ '[' LD_PRELOAD = LD_PRELOAD -a LD_PRELOAD = LD_PRELOAD ']'
+++ eval 'echo ${LD_PRELOAD+x}'
++++ echo
++ '[' -n '' ']'
++ _mlrv=MODULES_RUNENV_LD_PRELOAD
+++ eval 'echo ${MODULES_RUNENV_LD_PRELOAD:-}'
++++ echo
++ _mlre='LD_LIBRARY_PATH='\'''\'' LD_PRELOAD='\'''\'' '
++ '[' -n 'LD_LIBRARY_PATH='\'''\'' LD_PRELOAD='\'''\'' ' ']'
+++ eval 'LD_LIBRARY_PATH='\'''\''' 'LD_PRELOAD='\'''\''' /usr/bin/tclsh /usr/share/Modules/libexec/modulecmd.tcl bash '"$@"'
++++ LD_LIBRARY_PATH=
++++ LD_PRELOAD=
++++ /usr/bin/tclsh /usr/share/Modules/libexec/modulecmd.tcl bash load cuda-11.8
++ eval '_LMFILES__modshare=/usr/share/Modules/modulefiles/cuda-11.8:1;' export '_LMFILES__modshare;
+LOADEDMODULES_modshare=cuda-11.8:1;' export 'LOADEDMODULES_modshare;
+LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64;' export 'LD_LIBRARY_PATH;
+PATH=/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin;' export 'PATH;
+CUDA_PATH=/usr/local/11.8;' export 'CUDA_PATH;
+_LMFILES_=/usr/share/Modules/modulefiles/cuda-11.8;' export '_LMFILES_;
+LOADEDMODULES=cuda-11.8;' export 'LOADEDMODULES;
+LD_LIBRARY_PATH_modshare=/usr/local/cuda-11.8/lib64:1;' export 'LD_LIBRARY_PATH_modshare;
+PATH_modshare=/usr/local/cuda-11.8/bin:1:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:1:/home/piyushkh/.local/bin:1:/home/piyushkh/bin:1:/usr/sbin:1:/data/tir/projects/tir6/general/piyushkh/conda/bin:1:/usr/bin:1:/data/tir/projects/tir6/general/piyushkh/conda/condabin:1:/usr/local/sbin:1:/usr/share/Modules/bin:1:/usr/local/bin:1;' export 'PATH_modshare;
+test' '0;'
+++ _LMFILES__modshare=/usr/share/Modules/modulefiles/cuda-11.8:1
+++ export _LMFILES__modshare
+++ LOADEDMODULES_modshare=cuda-11.8:1
+++ export LOADEDMODULES_modshare
+++ LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64
+++ export LD_LIBRARY_PATH
+++ PATH=/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+++ export PATH
+++ CUDA_PATH=/usr/local/11.8
+++ export CUDA_PATH
+++ _LMFILES_=/usr/share/Modules/modulefiles/cuda-11.8
+++ export _LMFILES_
+++ LOADEDMODULES=cuda-11.8
+++ export LOADEDMODULES
+++ LD_LIBRARY_PATH_modshare=/usr/local/cuda-11.8/lib64:1
+++ export LD_LIBRARY_PATH_modshare
+++ PATH_modshare=/usr/local/cuda-11.8/bin:1:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:1:/home/piyushkh/.local/bin:1:/home/piyushkh/bin:1:/usr/sbin:1:/data/tir/projects/tir6/general/piyushkh/conda/bin:1:/usr/bin:1:/data/tir/projects/tir6/general/piyushkh/conda/condabin:1:/usr/local/sbin:1:/usr/share/Modules/bin:1:/usr/local/bin:1
+++ export PATH_modshare
+++ test 0
++ _mlstatus=0
++ '[' -n x ']'
++ IFS=' 	
+'
++ unset _mlre _mlv _mlrv _mlIFS
++ '[' -n '' ']'
++ unset _mlshdbg
++ return 0
++ source /data/tir/projects/tir6/general/piyushkh/conda/bin/activate vipergpt2
+++ _CONDA_ROOT=/data/tir/projects/tir6/general/piyushkh/conda
+++ . /data/tir/projects/tir6/general/piyushkh/conda/etc/profile.d/conda.sh
++++ export CONDA_EXE=/data/tir/projects/tir6/general/piyushkh/conda/bin/conda
++++ CONDA_EXE=/data/tir/projects/tir6/general/piyushkh/conda/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/data/tir/projects/tir6/general/piyushkh/conda/bin/python
++++ CONDA_PYTHON_EXE=/data/tir/projects/tir6/general/piyushkh/conda/bin/python
++++ '[' -z x ']'
+++ conda activate vipergpt2
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate vipergpt2
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate vipergpt2
++++ /data/tir/projects/tir6/general/piyushkh/conda/bin/conda shell.posix activate vipergpt2
+++ ask_conda='PS1='\''(vipergpt2) '\''
+export PATH='\''/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_PROMPT_MODIFIER='\''(vipergpt2) '\'''
+++ eval 'PS1='\''(vipergpt2) '\''
+export PATH='\''/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_PROMPT_MODIFIER='\''(vipergpt2) '\'''
++++ PS1='(vipergpt2) '
++++ export PATH=/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
++++ PATH=/usr/local/cuda-11.8/bin:/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/bin:/data/tir/projects/tir6/general/piyushkh/conda/condabin:/data/tir/projects/tir6/general/piyushkh/conda/bin:/home/piyushkh/.local/bin:/home/piyushkh/bin:/usr/share/Modules/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
++++ export CONDA_SHLVL=4
++++ CONDA_SHLVL=4
++++ export 'CONDA_PROMPT_MODIFIER=(vipergpt2) '
++++ CONDA_PROMPT_MODIFIER='(vipergpt2) '
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ python main_batch.py
+2023-11-25 00:05:25.519892: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2023-11-25 00:05:27.673057: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /usr/local/cuda-11.8/lib64
+2023-11-25 00:05:27.673320: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /usr/local/cuda-11.8/lib64
+2023-11-25 00:05:27.673329: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/lib/python3.10/site-packages/bitsandbytes/cuda_setup/main.py:145: UserWarning: /data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2 did not contain ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] as expected! Searching further paths...
+  warn(msg)
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:05<00:05,  5.17s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:07<00:00,  3.75s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:07<00:00,  3.96s/it]
+Using cache found in /home/piyushkh/.cache/torch/hub/intel-isl_MiDaS_master
+Using cache found in /home/piyushkh/.cache/torch/hub/intel-isl_MiDaS_master
+  0%|          | 0/5 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_2971475
+    from functools import partial
+IndexError: list index out of range
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_2971475
+    from functools import partial
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2971475
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_3045575
+    from functools import partial
+IndexError: list index out of range
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_3045575
+    from functools import partial
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_3045575
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_2183655
+    from functools import partial
+IndexError: list index out of range
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_2183655
+    from functools import partial
+IndexError: list index out of range
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2183655
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+ 20%|██        | 1/5 [01:45<07:00, 105.05s/it]Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 11, in execute_command_179845
+    import torch.multiprocessing as mp
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 11, in execute_command_179845
+    import torch.multiprocessing as mp
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_179845
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_2780325
+ValueError: list.remove(x): x not in list
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_2780325
+ValueError: list.remove(x): x not in list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2780325
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 13, in execute_command_5096415
+    from num2words import num2words
+NameError: name 'ground_left' is not defined
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 13, in execute_command_5096415
+    from num2words import num2words
+NameError: name 'ground_left' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_5096415
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+ 40%|████      | 2/5 [13:37<23:07, 462.39s/it]Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 7, in execute_command_1305165
+    import traceback
+AttributeError: 'str' object has no attribute 'llm_query'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 7, in execute_command_1305165
+    import traceback
+AttributeError: 'str' object has no attribute 'llm_query'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_1305165
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 6, in execute_command_5342525
+    import warnings
+AttributeError: 'ImagePatch' object has no attribute 'best_image_match'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 6, in execute_command_5342525
+    import warnings
+AttributeError: 'ImagePatch' object has no attribute 'best_image_match'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_5342525
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+ 60%|██████    | 3/5 [15:27<10:03, 301.50s/it]Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 7, in execute_command_3763585
+    import traceback
+  File "Codex", line 7, in <listcomp>
+    import traceback
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 7, in execute_command_3763585
+    import traceback
+  File "Codex", line 7, in <listcomp>
+    import traceback
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_3763585
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_3282845
+TypeError: '<' not supported between instances of 'str' and 'int'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_3282845
+TypeError: '<' not supported between instances of 'str' and 'int'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_3282845
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_2335535
+NameError: name 'coerce_to_numeric' is not defined
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 8, in execute_command_2335535
+NameError: name 'coerce_to_numeric' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2335535
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+ 80%|████████  | 4/5 [17:15<03:45, 225.20s/it]Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 194, in forward
+    out = consumers[model_name](*args, **kwargs)
+KeyError: 'maskrcnn'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2864225
+    import pathlib
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 138, in find
+    all_object_coordinates = self.forward('maskrcnn', self.cropped_image)[0]
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 115, in forward
+    return forward(model_name, *args, queues=self.queues, **kwargs)
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 196, in forward
+    raise KeyError(error_msg.format(list(consumers.keys()))) from e
+KeyError: "No model named maskrcnn. The available models are: ['blip', 'codex', 'depth', 'glip', 'gpt3_qa', 'gpt3_general', 'xvlm']. Make sure to activate it in the configs files"
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 194, in forward
+    out = consumers[model_name](*args, **kwargs)
+KeyError: 'maskrcnn'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2864225
+    import pathlib
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 138, in find
+    all_object_coordinates = self.forward('maskrcnn', self.cropped_image)[0]
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 115, in forward
+    return forward(model_name, *args, queues=self.queues, **kwargs)
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 196, in forward
+    raise KeyError(error_msg.format(list(consumers.keys()))) from e
+KeyError: "No model named maskrcnn. The available models are: ['blip', 'codex', 'depth', 'glip', 'gpt3_qa', 'gpt3_general', 'xvlm']. Make sure to activate it in the configs files"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_2864225
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_1527025
+    from functools import partial
+  File "Codex", line 5, in <listcomp>
+    from functools import partial
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 5, in execute_command_1527025
+    from functools import partial
+  File "Codex", line 5, in <listcomp>
+    from functools import partial
+TypeError: ImagePatch.simple_query() missing 1 required positional argument: 'question'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_1527025
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 194, in forward
+    out = consumers[model_name](*args, **kwargs)
+KeyError: 'maskrcnn'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_5685555
+    import pathlib
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 138, in find
+    all_object_coordinates = self.forward('maskrcnn', self.cropped_image)[0]
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 115, in forward
+    return forward(model_name, *args, queues=self.queues, **kwargs)
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 196, in forward
+    raise KeyError(error_msg.format(list(consumers.keys()))) from e
+KeyError: "No model named maskrcnn. The available models are: ['blip', 'codex', 'depth', 'glip', 'gpt3_qa', 'gpt3_general', 'xvlm']. Make sure to activate it in the configs files"
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 194, in forward
+    out = consumers[model_name](*args, **kwargs)
+KeyError: 'maskrcnn'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_5685555
+    import pathlib
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 138, in find
+    all_object_coordinates = self.forward('maskrcnn', self.cropped_image)[0]
+  File "/data/tir/projects/tir6/general/piyushkh/viper/image_patch.py", line 115, in forward
+    return forward(model_name, *args, queues=self.queues, **kwargs)
+  File "/data/tir/projects/tir6/general/piyushkh/viper/vision_processes.py", line 196, in forward
+    raise KeyError(error_msg.format(list(consumers.keys()))) from e
+KeyError: "No model named maskrcnn. The available models are: ['blip', 'codex', 'depth', 'glip', 'gpt3_qa', 'gpt3_general', 'xvlm']. Make sure to activate it in the configs files"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 76, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_5685555
+    import pathlib
+AttributeError: 'ImagePatch' object has no attribute 'query_image'
+100%|██████████| 5/5 [18:53<00:00, 179.28s/it]100%|██████████| 5/5 [18:53<00:00, 226.74s/it]

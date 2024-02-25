@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 
 class MyDataset(Dataset):
     def __init__(self, split, data_path="", input_type='image', image_transforms=None, fps=30, max_num_frames=30,
-                 max_samples=None, start_sample=0, **kwargs):
+                 max_samples=None, start_sample=0, dataset_size='full', captions=False, **kwargs):
         """
         Args:
             split (str): Data split. One of ["challenge", "submission", "test", "testdev", "train", "val"]
@@ -32,7 +32,18 @@ class MyDataset(Dataset):
         self.max_num_frames = max_num_frames
 
         # Load questions, answers, and image ids
-        with open(self.data_path / self.split / 'queries.csv', 'r') as f:
+        if dataset_size == 'full':
+            file_name = 'queries.csv'
+        elif dataset_size == 'small':
+            file_name = 'queries_small.csv'
+
+        if captions:
+            file_name = file_name.replace('queries', 'queries_captions')
+        
+
+        print("Loading {}".format(file_name))
+
+        with open(self.data_path / self.split / file_name, 'r') as f:
             # The csv has the rows [query, answer, image_name or video_name]
             self.df = pd.read_csv(f, index_col=None, keep_default_na=False)
 
@@ -53,6 +64,15 @@ class MyDataset(Dataset):
             image = self.image_transforms(pil_image)[:3]
         else:
             image = pil_image
+
+        # print("Saving image")
+        # #get last part of path after _ and save as jpg
+        # image_path_temp = str(image_path)
+        # image_path_temp = image_path_temp.split('_')[-1].split('.')[0]
+        # save_path= "temp_img/test_{}.jpeg".format(image_path_temp)
+        # print("Saving image to {}".format(save_path))
+        # image.save(save_path)
+        
         return image
 
     def get_video(self, video_path):
