@@ -1,95 +1,64 @@
-"""
-https://okvqa.allenai.org/
-"""
-
 import os
 import time
+import re
 
 from PIL import Image
 import pandas as pd
 from torch.utils.data import Dataset
-import json
-import re
+import numpy as np
 
-from datasets import general_postprocessing, all_answers_from_dict
-
-import nltk
-nltk.download("punkt")
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-
-def stem_sentence(sentence):
-    stemmer = PorterStemmer()
-    tokenized_words = word_tokenize(sentence)
-    stemmed_words = [stemmer.stem(word) for word in tokenized_words]
-    return ' '.join(stemmed_words)
-
-def most_common_from_dict(dct):
-    lst = [x["answer"] for x in dct]
-    return max(set(lst), key=lst.count)
+from datasets import general_postprocessing
 
 
-def most_common_from_dict_raw(dct):
-    lst = [x["raw_answer"] for x in dct]
-    return max(set(lst), key=lst.count)
+class GQADataset(Dataset):
+    BALANCED_TYPE = {
+        True: "balanced",
+        False: "all"
+    }
 
-
-class OKVQADataset(Dataset):
-    IMAGE_PATH = {
-        "train": ("train2014", "OpenEnded_mscoco_train2014_questions.json", "mscoco_train2014_annotations.json"),
-        "test": ("val2014", "OpenEnded_mscoco_val2014_questions.json", "mscoco_val2014_annotations.json")}
-
-    def __init__(self, split, data_path="",
+    def __init__(self, split, balanced=True, data_path="",
                  image_transforms=None, question_transforms=None, tokenize=None,
-                 # answer_selection=most_common_from_dict,
-                 answer_selection=all_answers_from_dict,
-                 verbose=False, testing=False, max_samples=None):
+                 verbose=False, testing=False, max_samples=None, first_n=None, return_pil=True):
         """
-        split train, val, test
-        balanced True, False
-        image_transforms
-        question_transforms
+        Args:
+            split (str): Data split. One of ["challenge", "submission", "test", "testdev", "train", "val"]
+            balanced (bool): You balanced version or full version.
+            image_transforms:
+            question_transforms:
+            tokenize (fct):
+            verbose (bool): Print some infos. Default=True
+            testing (bool): Set to true for data splits without targets. Default=False.
+            first_n (int): Only use the first n samples. Default=None. Only valid if loading from hdf.
         """
-        self.stemmer = PorterStemmer()
-        
         start_time = time.time()
         self.split = split
         self.testing = testing
-        self.answer_selection = answer_selection
-        assert split in ["train", "test"]
+        assert split in ["challenge", "submission", "test", "testdev", "train", "val"]
+        self.balanced = balanced
+        self.balanced_type = self.BALANCED_TYPE[balanced]
         self.data_path = data_path
         self.image_transforms = image_transforms
         self.question_transforms = question_transforms
         self.tokenize = tokenize
         self.input_type = 'image'
+        self.return_pil = return_pil
 
-        if verbose:
-            path = self.data_path
-            print(f"Start loading OKVQA Dataset from {path}", flush=True)
-
-        # Questions
-        path = os.path.expanduser(os.path.join(data_path, self.IMAGE_PATH[split][1]))
-        with open(path, 'r') as f:
-            data = json.load(f)
-        df = pd.DataFrame(data["questions"])
-        df["image_path"] = df["image_id"].apply(
-            lambda x: f"{self.IMAGE_PATH[split][0]}/COCO_{self.IMAGE_PATH[split][0]}_{x:012d}.jpg")
-
-        # Annotations
-        if not testing:
-            path = os.path.expanduser(os.path.join(data_path, self.IMAGE_PATH[split][2]))
-            with open(path, 'r') as f:
-                data = json.load(f)
-            df_annotations = pd.DataFrame(data["annotations"])
-            df = pd.merge(df, df_annotations, left_on='question_id', right_on='question_id', how='left')
-            # Check if image_id are still correct, remove newly created columns with x and y ending and just use the name image_id
-            assert df["image_id_x"].tolist() == df[
-                "image_id_y"].tolist(), "image_id in df and df_annotations does not match."
-            df["image_id"] = df["image_id_x"]
-            del df["image_id_x"]
-            del df["image_id_y"]
-        df["mc_answer"] = df.answers.apply(most_common_from_dict_raw)
-        self.df = df
+        if not balanced and split == "train":
+            raise NotImplementedError
+        else:
+            # check path to cached df exists
+            if self.split == 'train' and self.balanced_type == 'balanced' and os.path.exists(
+                    os.path.join(data_path, f"questions/{self.split}_{self.balanced_type}_questions.h5")):
+                if verbose:
+                    print(f"Loading GQA Dataset from {data_path}", flush=True)
+                self.df = pd.read_hdf(
+                    os.path.join(data_path, f"questions/{self.split}_{self.balanced_type}_questions.h5"), "table", stop=first_n)
+            else:
+                self.file_name = f"questions/{self.split}_{self.balanced_type}_questions.json"
+                path = os.path.expanduser(os.path.join(data_path, self.file_name))
+                if verbose:
+                    print(f"Loading GQA Dataset from {path}", flush=True)
+                self.df = pd.read_json(path, orient="index")
 
         if max_samples is not None:
             self.df = self.df.sample(n=max_samples)
@@ -97,8 +66,8 @@ class OKVQADataset(Dataset):
         self.n_samples = self.df.shape[0]
         if verbose:
             print(
-                f"Loading OKVQA Dataset done in {time.time() - start_time:.1f} seconds. Loaded {self.n_samples} samples.")
-
+                f"Loading GQA Dataset done in {time.time() - start_time:.1f} seconds. Loaded {self.n_samples} samples.")
+            
         # For evaluation
         self.contractions = {"aint": "ain't", "arent": "aren't", "cant": "can't", "couldve": "could've",
                              "couldnt": "couldn't", "couldn'tve": "couldn't've", "couldnt've": "couldn't've",
@@ -156,113 +125,9 @@ class OKVQADataset(Dataset):
         self.punct = [';', r"/", '[', ']', '"', '{', '}',
                       '(', ')', '=', '+', '\\', '_', '-',
                       '>', '<', '@', '`', ',', '?', '!']
-
-    def get_img_path(self, index):
-        image_id = self.df.iloc[index]["image_path"]
-        image_path = os.path.expanduser(os.path.join(self.data_path, image_id))
-        return image_path
-
-    def get_index_from_sample_id(self, sample_id):
-        return self.df[self.df["sample_id"] == sample_id].index[0]
-
-    def __getitem__(self, index):
-        # image input
-        image_id = self.df.iloc[index]["image_id"]
-        image_path = self.df.iloc[index]["image_path"]
-        # question input
-        question_id = self.df.iloc[index]["question_id"]
-        question = self.df.iloc[index]["question"]
-        # # answer and question type
-        # answer_type = self.df.iloc[index]["answer_type"]
-        # question_type = self.df.iloc[index]["question_type"]
-        # # split
-        # split = self.split
-        # specify target if available (i.e. answer)
-        selected_answers = None
-        if not self.testing:
-            answer_list = self.df.iloc[index]["answers"]  # Return whole list
-            selected_answers = self.answer_selection(
-                self.df.iloc[index]["answers"])  # Apply answer_selection() function to list of dict
-
-        # Load and transform image
-        image_path = os.path.expanduser(os.path.join(self.data_path, image_path))
-        with open(image_path, "rb") as f:
-            pil_img = Image.open(f).convert("RGB")
-        if self.image_transforms:
-            img = self.image_transforms(pil_img)
-        else:
-            img = pil_img
-
-        # Load, transform and tokenize question
-        if self.question_transforms:
-            question = self.question_transforms(question)
-        if self.tokenize:
-            question = self.tokenize(question)
-
-        # Return
-        if self.testing:
-            return {"sample_id": question_id, "img": img, "question": question, 'pil_img': pil_img, 'index': index,
-                    'possible_answers': [], 'info_to_prompt': question, 'question_type': -1}
-
-        else:
-            return {"sample_id": question_id, 'answer': selected_answers, "img": img, "question": question,
-                    'pil_img': pil_img, 'index': index, 'possible_answers': [], 'info_to_prompt': question,
-                    "question_type": -1}
-
-    def post_process(self, prediction, stem=True):
-        """
-        Code from https://github.com/GT-Vision-Lab/VQA/blob/master/PythonEvaluationTools/vqaEvaluation/vqaEval.py,
-        as indicated here https://okvqa.allenai.org/leaderboard.html
-        :return:
-        """
-        prediction = general_postprocessing(prediction)
-
-        prediction = prediction.replace('\n', ' ')
-        prediction = prediction.replace('\t', ' ')
-        prediction = prediction.strip()
-        prediction = self.processPunctuation(prediction)
-        prediction = self.processDigitArticle(prediction)
         
-        if stem:
-            
-            prediction = stem_sentence(prediction)
-
-        return prediction
-
-    def accuracy(self, prediction, ground_truth, *args):
-        """
-        Args:
-            prediction (list): List of predicted answers.
-            ground_truth (list): List of ground truth answers. Every element in the list is a list of strings with 10
-            possible answers
-        Returns:
-            score (float): Score of the prediction.
-        """
-        assert len(prediction) == len(ground_truth)
-        score = 0
-        for p, g in zip(prediction, ground_truth):
-            # There are 10 answers per question (10 annotators), most of them are the same
-            item_score = self.get_item_score(p, g)
-            score += item_score
-
-        return score / len(prediction)
-
-    def get_item_score(self, p, g):
-        g = [self.post_process(g_, stem=False) for g_ in g]
-        p = self.post_process(p)
-
-        # The formulation is explained here: https://visualqa.org/evaluation.html
-        accs = []
-        for i, g_ in enumerate(g):
-            other_answers = [item for j, item in enumerate(g) if i != j] # if it's 'other indices' instead of 'other answers'
-            # for g_ in g:
-            #     other_answers = [item for item in g if item != g_]
-            matching_answers = [item for item in other_answers if item == p]
-            acc = min(1., float(len(matching_answers)) / 3)
-            accs.append(acc)
-        item_score = sum(accs) / len(accs)
-        return item_score
-
+        self.max_words = 50
+    
     def processPunctuation(self, inText):
         outText = inText
         for p in self.punct:
@@ -287,6 +152,94 @@ class OKVQADataset(Dataset):
                 outText[wordId] = self.contractions[word]
         outText = ' '.join(outText)
         return outText
+
+    def get_img_path(self, index):
+        if "imageId" in self.df.columns:
+            image_id = self.df.iloc[index]["imageId"]
+        else:
+            image_id = self.df.iloc[index]["image_id"]
+        return os.path.expanduser(os.path.join(self.data_path, "../images", f"{image_id}.jpg"))
+
+    def get_index_from_sample_id(self, sample_id):
+        return np.where(self.df.index == sample_id)[0][0].item()
+
+    def __getitem__(self, index):
+        # image input
+        sample_id = self.df.iloc[index].name
+        if "imageId" in self.df.columns:
+            image_id = self.df.iloc[index]["imageId"]
+        else:
+            image_id = self.df.iloc[index]["image_id"]
+        question = self.df.iloc[index]["question"]
+
+        question_type = -1
+        answer = -1
+        if not self.testing:
+            answer = self.df.iloc[index]["answer"]
+            question_type = self.df.iloc[index]["groups"]["global"]
+            if question_type is None:
+                question_type = -1  # can't have None for DataLoader
+
+        # Load and transform image
+        image_path = os.path.expanduser(os.path.join(self.data_path, "images", f"{image_id}.jpg"))
+        with open(image_path, "rb") as f:
+            pil_img = Image.open(f).convert("RGB")
+        if self.image_transforms:
+            img = self.image_transforms(pil_img)
+        else:
+            img = pil_img
+
+        # Load, transform and tokenize question
+        if self.question_transforms:
+            question = self.question_transforms(question)
+        if self.tokenize:
+            question = self.tokenize(question)
+
+        # Return
+        if self.testing:
+            if (sample_id is None) or (img is None) or (question is None):
+                raise Exception(f"Error in GQA Dataset: sample_id={sample_id}, img={img}, question={question}")
+            out_dict = {"sample_id": sample_id, "img": img, "question": question, 'index': index}
+            if self.return_pil:
+                out_dict["pil_img"] = pil_img
+            return out_dict
+        else:
+            out_dict = {"sample_id": sample_id, "answer": answer, "img": img, "question": question, 'pil_img': pil_img,
+                        "question_type": question_type, 'index': index, 'possible_answers': [],
+                        'info_to_prompt': question}
+            return out_dict
+
+    def post_process(self, prediction, stem=True):
+        """
+        Code from https://github.com/GT-Vision-Lab/VQA/blob/master/PythonEvaluationTools/vqaEvaluation/vqaEval.py,
+        as indicated here https://okvqa.allenai.org/leaderboard.html
+        :return:
+        """
+        prediction = general_postprocessing(prediction)
+
+        prediction = prediction.replace('\n', ' ')
+        prediction = prediction.replace('\t', ' ')
+        prediction = prediction.strip()
+        prediction = self.processPunctuation(prediction)
+        prediction = self.processDigitArticle(prediction)
+        return prediction
+
+    def accuracy(self, prediction, ground_truth, *args):
+        """
+        Args:
+            prediction (list): List of predicted answers.
+            ground_truth (list): List of ground truth answers.
+        Returns:
+            score (float): Score of the prediction.
+        """
+        if len(prediction) == 0:  # if no prediction, return 0
+            return 0
+        assert len(prediction) == len(ground_truth)
+        score = 0
+        for p, g in zip(prediction, ground_truth):
+            if self.post_process(p) == g:
+                score += 1
+        return score / len(prediction)
 
     # we can call len(dataset) to return the size
     def __len__(self):
