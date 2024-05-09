@@ -167,15 +167,3 @@ OmegaConf.
 - `utils.py`, `useful_lists` and `base_models`: Auxiliary files containing useful functions, lists and pretrained model 
 implementations.
 
-## Citation
-
-If you use this code, please consider citing the paper as:
-
-```
-@article{surismenon2023vipergpt,
-    title={ViperGPT: Visual Inference via Python Execution for Reasoning},
-    author={D\'idac Sur\'is and Sachit Menon and Carl Vondrick},
-    journal={arXiv preprint arXiv:2303.08128},
-    year={2023}
-}
-```
