@@ -15,7 +15,7 @@ For checking out the prompting experiments with V*Bench, refer to ```prompts/ben
 
 
 
-## Quickstart
+## Quickstart for Vanilla ViperGPT
 Clone recursively:
 ```bash
 git clone --recurse-submodules https://github.com/cvlab-columbia/viper.git
