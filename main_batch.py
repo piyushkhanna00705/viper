@@ -21,6 +21,10 @@ from configs import config
 from utils import seed_everything
 import datasets
 
+import os
+os.environ['HF_HOME'] = '/data/tir/projects/tir6/general/piyushkh/hf/'
+
+
 # See https://github.com/pytorch/pytorch/issues/11201, https://github.com/pytorch/pytorch/issues/973
 # Not for dataloader, but for multiprocessing batches
 mp.set_sharing_strategy('file_system')
@@ -39,7 +43,7 @@ def my_collate(batch):
 
 
 def run_program(parameters, queues_in_, input_type_, retrying=False):
-    from image_patch import ImagePatch, llm_query, best_image_match, distance, bool_to_yesno
+    from image_patch import ImagePatch, llm_query, best_image_match, distance, bool_to_yesno, select_answer
     from video_segment import VideoSegment
 
     global queue_results
@@ -49,9 +53,11 @@ def run_program(parameters, queues_in_, input_type_, retrying=False):
     code_header = f'def execute_command_{sample_id}(' \
                   f'{input_type_}, possible_answers, query, ' \
                   f'ImagePatch, VideoSegment, ' \
-                  'llm_query, bool_to_yesno, distance, best_image_match):\n' \
+                  'llm_query, bool_to_yesno, distance, best_image_match, select_answer):\n' \
                   f'    # Answer is:'
     code = code_header + code
+
+    # print("GENERATED CODE:", code)
 
     try:
         exec(compile(code, 'Codex', 'exec'), globals())
@@ -79,7 +85,7 @@ def run_program(parameters, queues_in_, input_type_, retrying=False):
             # Classes to be used
             image_patch_partial, video_segment_partial,
             # Functions to be used
-            llm_query_partial, bool_to_yesno, distance, best_image_match)
+            llm_query_partial, bool_to_yesno, distance, best_image_match, select_answer)
     except Exception as e:
         # print full traceback
         traceback.print_exc()
@@ -121,8 +127,10 @@ def main():
         queue_results_main = None
         queues_results = [None for _ in range(batch_size)]
     
-
+    print("Model Name: ", config.codex.model)
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
+    print("Using model: ", model_name_codex)
+
     codex = partial(forward, model_name=model_name_codex, queues=[queues_in, queue_results_main])
 
     if config.clear_cache:
@@ -171,7 +179,8 @@ def main():
                 
                 #ToDo PK: add caption colums in the queries.csv when the captions json is ready.
                 if not config.use_cached_codex:
-                    codes = codex(prompt=batch['query'], base_prompt=base_prompt, input_type=input_type,
+                    print("Query: ", batch['query'])
+                    codes = codex(prompt=batch['query'], image = batch['image'], base_prompt=base_prompt, input_type=input_type,
                                   extra_context=batch['extra_context'])
 
                 else:
@@ -183,11 +192,11 @@ def main():
                     if not config.multiprocessing:
                         # Otherwise, we would create a new model for every process
                         results = []
-                        # print("Codes: ", codes)
-                        # print("Batch['sample_id']: ", batch['sample_id'])   
-                        # print("Batch['image']: ", batch['image'])
-                        # print("Batch['possible_answers']: ", batch['possible_answers'])
-                        # print("Batch['query']: ", batch['query'])
+                        print("Codes: ", codes)
+                        print("Batch['sample_id']: ", batch['sample_id'])   
+                        print("Batch['image']: ", batch['image'])
+                        print("Batch['possible_answers']: ", batch['possible_answers'])
+                        print("Batch['query']: ", batch['query'])
 
                         for c, sample_id, img, possible_answers, query in \
                                 zip(codes, batch['sample_id'], batch['image'], batch['possible_answers'], batch['query']):
@@ -208,8 +217,12 @@ def main():
                 all_codes += [r[1] for r in results]
                 all_ids += batch['sample_id']
                 all_answers += batch['answer']
-                all_possible_answers += batch['possible_answers']
-                all_query_types += batch['query_type']
+                
+                if 'possible_answers' in batch:
+                    all_possible_answers += batch['possible_answers']
+                if 'query_type' in batch:
+                    all_query_types += batch['query_type']
+
                 all_queries += batch['query']
                 all_img_paths += [dataset.get_sample_path(idx) for idx in batch['index']]
                 # print("Batch Done...")
@@ -248,7 +261,7 @@ def main():
         print('Saving results to', filename)
         df = pd.DataFrame([all_results, all_answers, all_codes, all_ids, all_queries, all_img_paths,
                            all_possible_answers]).T
-        df.columns = ['result', 'answer', 'code', 'id', 'query', 'image_caption', 'img_path', 'possible_answers']
+        df.columns = ['result', 'answer', 'code', 'id', 'query', 'img_path', 'possible_answers']
         # make the result column a string
         df['result'] = df['result'].apply(str)
         df.to_csv(results_dir / filename, header=True, index=False, encoding='utf-8')

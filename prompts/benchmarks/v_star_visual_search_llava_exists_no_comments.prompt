@@ -1,0 +1,117 @@
+from PIL import Image
+from vision_functions import obtain_query_response_from_image
+from nlp_functions import llm_query, select_answer
+
+def llm_query(question: str)->str:
+    return llm_query(question)
+
+
+def select_answer(info: dict, question: str, options: List[str]) -> str:
+    return select_answer(info, question, options)
+
+class ImagePatch:
+    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):
+        if left is None and right is None and upper is None and lower is None:
+            self.cropped_image = image
+            self.left = 0
+            self.lower = 0
+            self.right = image.shape[2]
+            self.upper = image.shape[1]
+        else:
+            self.cropped_image = image[:, lower:upper, left:right]
+            self.left = left
+            self.lower = lower
+            self.right = right
+            self.upper = upper
+
+        self.width = self.cropped_image.shape[2]
+        self.height = self.cropped_image.shape[1]
+    
+    def simple_query_llava(self, query: str):
+        answer = obtain_query_response_from_image(self.cropped_image, query)
+        return answer
+    def visual_search(self, search_object : str, query : str, possible_answers : List[str]):
+        answer = search_for_object_in_the_image(self.cropped_image, search_object)
+        return answer
+
+    
+# Examples of using the ImagePatch class
+
+# Does the flag have two or three colors?
+# possible answers: ['The flag has three colors.', 'The flag has two colors.']
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    if image_patch.object_exists("flag"):
+        flag_patch_colors = image_patch.simple_query_llava(""Which colors are present on the flag?"")
+        info = {"Colors in the flag": flag_patch_colors}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        search_object = "flag"
+        visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+        if visual_search_ans:
+            return visual_search_ans
+        return select_answer(info, query, possible_answers)
+
+# What is the color of the little girl's shirt?
+# possible answers: ["The color of the little girl's shirt is pink.", "The color of the little girl's shirt is white.", "The color of the little girl's shirt is yellow.", "The color of the little girl's shirt is black."]
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    if image_patch.object_exists("little girl"):
+        little_girl_shirt_patch_color = image_patch.simple_query_llava(""What is the color of the little girl's shirt?"")
+        info = {"Color of little girl's shirt": little_girl_shirt_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        search_object = "little girl"
+        visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+        if visual_search_ans:
+            return visual_search_ans
+        return select_answer(info, query, possible_answers)
+
+
+# What is the color of the tent?
+# possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    if image_patch.object_exists("tent"):
+        tent_patch_color = tent_patch.simple_query_llava(""What is the color of the tent?"")
+        info = {"Color of tent": tent_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        search_object = "tent"
+        visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+        if visual_search_ans:
+            return visual_search_ans
+        return select_answer(info, query, possible_answers)
+
+
+# What kind of animal is in the poster?
+# possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    poster_patches = image_patch.find(""poster"")
+    #The question requires the animal on the poster, so we first try to find the posters in the image.
+    for poster_patch in poster_patches:
+        if poster_patch.object_exists(""animal""):
+            animal_in_poster = poster_patch.simple_query_llava(""What kind of animal is in the poster?"")
+            info = {"Animal in the poster": animal_in_poster}
+            answer = select_answer(info, query, possible_answers)
+            return answer
+    # We did not find the object in the question- animal in poster patches, so we need to call the visual search module.
+    search_object = "animal"
+    visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+    if visual_search_ans:
+        return visual_search_ans
+    return select_answer(info, query, possible_answers)
+
+
+
+# INSERT_QUERY_HERE
+# possible answers: EXTRA_CONTEXT_HERE
+def execute_command(image)->str:

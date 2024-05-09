@@ -25,12 +25,29 @@ from torch import hub
 from torch.nn import functional as F
 from torchvision import transforms
 from typing import List, Union
+from openai import OpenAI
+
+
 
 from configs import config
 from utils import HiddenPrints
+import json
 
-with open('api.key') as f:
-    openai.api_key = f.read().strip()
+os.environ['HF_HOME'] = '/data/tir/projects/tir6/general/piyushkh/hf/'
+
+# with open('api.key') as f:
+#     openai.api_key = f.read().strip()
+
+OPENAI_API_KEY = None
+
+openai_client = None
+with open('api_key.json') as f:
+    data = json.load(f)
+    OPENAI_API_KEY = data['secret_key']
+    openai_client = OpenAI( 
+        organization= data['fried_nlp'],
+        api_key= data['secret_key']
+    )
 
 cache = Memory('cache/' if config.use_cache else None, verbose=0)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -103,6 +120,31 @@ class ObjectDetector(BaseModel):
         p = torch.stack([p[..., 0], 1 - p[..., 3], p[..., 2], 1 - p[..., 1]], -1)  # [left, lower, right, upper]
         detections['pred_boxes'] = p
         return detections
+    
+
+#Modify code to use Llava model for caption generation
+class LlavaCaptionGenerator(BaseModel):
+    name = 'object_detector'
+
+    def __init__(self, gpu_number=0):
+        super().__init__(gpu_number)
+
+        with HiddenPrints('ObjectDetector'):
+            detection_model = hub.load('facebookresearch/detr', 'detr_resnet50', pretrained=True).to(self.dev)
+            detection_model.eval()
+
+        self.detection_model = detection_model
+
+    @torch.no_grad()
+    def forward(self, image: torch.Tensor):
+        """get_object_detection_bboxes"""
+        input_batch = image.to(self.dev).unsqueeze(0)  # create a mini-batch as expected by the model
+        detections = self.detection_model(input_batch)
+        p = detections['pred_boxes']
+        p = torch.stack([p[..., 0], 1 - p[..., 3], p[..., 2], 1 - p[..., 1]], -1)  # [left, lower, right, upper]
+        detections['pred_boxes'] = p
+        return detections
+
 
 
 class DepthEstimationModel(BaseModel):
@@ -819,17 +861,28 @@ class GPT3Model(BaseModel):
             response_ = []
             for i in range(len(prompts)):
                 if self.model == 'chatgpt':
-                    resp_i = [r['message']['content'] for r in
-                              response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    # resp_i = [r['message']['content'] for r in
+                    #           response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    
+                    resp_i = [r.message.content for r in
+                              response.choices[i * self.n_votes:(i + 1) * self.n_votes]]
+                    # print(f"resp_i for model {self.model}: ", resp_i)                    
                 else:
-                    resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    # resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    resp_i = [r.text for r in response.choices[i * self.n_votes:(i + 1) * self.n_votes]]
+                    # print(f"resp_i for model {self.model}: ", resp_i)
+
                 response_.append(self.most_frequent(resp_i).lstrip())
             response = response_
         else:
             if self.model == 'chatgpt':
-                response = [r['message']['content'].lstrip() for r in response['choices']]
+                # response = [r['message']['content'].lstrip() for r in response['choices']]
+                response = [r.message.content.lstrip() for r in response.choices]
+                # print(f"process_guesses Response for model {self.model}: ", response)
             else:
-                response = [r['text'].lstrip() for r in response['choices']]
+                # response = [r['text'].lstrip() for r in response['choices']]
+                response = [r.text.lstrip() for r in response.choices]
+                # print(f"process_guesses Response for model {self.model}: ", response)
         return response
 
     def process_guesses_fn(self, prompt):
@@ -850,17 +903,25 @@ class GPT3Model(BaseModel):
             response_ = []
             for i in range(len(prompts)):
                 if self.model == 'chatgpt':
-                    resp_i = [r['message']['content'] for r in
-                              response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    # resp_i = [r['message']['content'] for r in
+                    #           response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    resp_i = [r.message.content for r in
+                              response.choices[i * self.n_votes:(i + 1) * self.n_votes]]
+                    print(f"resp_i for model {self.model}: ", resp_i)
                 else:
-                    resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    # resp_i = [r['text'] for r in response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
+                    resp_i = [r.text for r in response.choices[i * self.n_votes:(i + 1) * self.n_votes]]
+                    print(f"resp_i for model {self.model}: ", resp_i)
                 response_.append(self.most_frequent(resp_i))
             response = response_
         else:
             if self.model == 'chatgpt':
-                response = [r['message']['content'] for r in response['choices']]
+                # response = [r['message']['content'] for r in response['choices']]
+                response = [r.message.content for r in response.choices]
             else:
-                response = [self.process_answer(r["text"]) for r in response['choices']]
+                # response = [self.process_answer(r["text"]) for r in response['choices']]
+                response = [self.process_answer(r.text) for r in response.choices]
+            # print(f"Response for model {self.model}: ", response)
         return response
 
     def get_qa_fn(self, prompt):
@@ -872,23 +933,27 @@ class GPT3Model(BaseModel):
         response = self.query_gpt3(prompts, model=self.model, max_tokens=256, top_p=1, frequency_penalty=0,
                                    presence_penalty=0)
         if self.model == 'chatgpt':
-            response = [r['message']['content'] for r in response['choices']]
+            # response = [r['message']['content'] for r in response['choices']]
+            response = [r.message.content for r in response.choices]
         else:
-            response = [r["text"] for r in response['choices']]
+            # response = [r["text"] for r in response['choices']]
+            response = [r.text for r in response.choices]
         return response
 
     def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
                    stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
+        # print("Using model: ", model)
+
         if model == "chatgpt":
             messages = [{"role": "user", "content": p} for p in prompt]
-            response = openai.ChatCompletion.create(
+            response = openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=self.temperature,
             )
         else:
-            response = openai.Completion.create(
+            response = openai_client.completions.create(
                 model=model,
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -934,6 +999,8 @@ class GPT3Model(BaseModel):
         else:
             response = []  # All previously cached
 
+        # print("Responses: ", response)
+
         if config.use_cache:
             for p, r in zip(prompt, response):
                 # "call" forces the overwrite of the cache
@@ -952,16 +1019,97 @@ class GPT3Model(BaseModel):
         return ['gpt3_' + n for n in ['qa', 'guess', 'general']]
 
 
+def gpt4v_helper(extended_prompt, extended_imgs):
+    import base64
+    import requests
+
+    print("gpt4v_helper Len of extended_prompt: ", len(extended_prompt))
+    print("gpt4v_helper Len of extended_imgs: ", len(extended_imgs))
+    print("gpt4v_helper Type of extended_imgs: ", type(extended_imgs[0]))
+
+    # OpenAI API Key
+    api_key = OPENAI_API_KEY
+
+    if type(extended_imgs) == None:
+        print("extended_imgs is None!!!")
+        return
+
+    if len(extended_prompt) != len(extended_imgs):
+        raise ValueError("Length of extended_prompt and extended_imgs should be same")
+        return
+
+    # # Function to encode the image
+    # def encode_image(image_path):
+    #     with open(image_path, "rb") as image_file:
+    #         return base64.b64encode(image_file.read()).decode('utf-8')
+
+    # # Path to your image
+    # image_path = "path_to_your_image.jpg"
+
+    # Getting the base64 string
+    # base64_image = encode_image(image_path)
+
+    headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {api_key}"
+    }
+
+    responses = []
+
+    for prompt, img_b64 in zip(extended_prompt, extended_imgs):
+        payload = {
+        "model": "gpt-4-vision-preview",
+        "messages": [
+            {
+            "role": "user",
+            "content": [
+                {
+                "type": "text",
+                "text": prompt
+                },
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{img_b64}"
+                }
+                }
+            ]
+            }
+        ],
+        "max_tokens": 300
+        }
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        print(response.json())
+        responses.append(response.json())
+
+    resp_filtered = [r.choices[0].message.content.replace("execute_command(image)", "execute_command(image, my_fig, time_wait_between_lines, syntax)") for r in responses]
+    return resp_filtered
+
+
+
+
 # @cache.cache
 @backoff.on_exception(backoff.expo, Exception, max_tries=10)
-def codex_helper(extended_prompt):
+def codex_helper(extended_prompt, extended_imgs):
     assert 0 <= config.codex.temperature <= 1
     assert 1 <= config.codex.best_of <= 20
 
+    print("Using code gen model", config.codex.model)
+
     if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
+        
         if not isinstance(extended_prompt, list):
             extended_prompt = [extended_prompt]
-        responses = [openai.ChatCompletion.create(
+
+        # print("Extended Prompt Len", len(extended_prompt))
+
+        # #Print last 5 sentence for each prompt in extended_prompt
+        # for prompt in extended_prompt:
+        #     sentences = prompt.split('\n')
+        #     last_five_sentences = '. '.join(sentences[-5:])
+        #     print("Last 5 sentences of the prompt: ", last_five_sentences)
+
+        responses = [openai_client.chat.completions.create(
             model=config.codex.model,
             messages=[
                 # {"role": "system", "content": "You are a helpful assistant."},
@@ -977,14 +1125,22 @@ def codex_helper(extended_prompt):
             stop=["\n\n"],
         )
             for prompt in extended_prompt]
-        resp = [r['choices'][0]['message']['content'].replace("execute_command(image)",
-                                                              "execute_command(image, my_fig, time_wait_between_lines, syntax)")
-                for r in responses]
+        # resp = [r['choices'][0]['message']['content'].replace("execute_command(image)",
+        #                                                       "execute_command(image, my_fig, time_wait_between_lines, syntax)")
+        #         for r in responses]
+        
+        resp = [r.choices[0].message.content.replace("execute_command(image)", "execute_command(image, my_fig, time_wait_between_lines, syntax)") for r in responses]
+
+        # print(f"Resp in codex_helper function with {config.codex.model} model: ", resp)
+
     #         if len(resp) == 1:
     #             resp = resp[0]
+    elif config.codex.model in ("gpt-4v"):
+        resp = gpt4v_helper(extended_prompt, extended_imgs)
+
     else:
         warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
-        response = openai.Completion.create(
+        response = openai_client.completions.create(
             model="code-davinci-002",
             temperature=config.codex.temperature,
             prompt=extended_prompt,
@@ -1000,7 +1156,8 @@ def codex_helper(extended_prompt):
             resp = [r['text'] for r in response['choices']]
         else:
             resp = response['choices'][0]['text']
-
+            
+    print("Resp in codex_helper function: ", resp)
     return resp
 
 
@@ -1020,7 +1177,7 @@ class CodexModel(BaseModel):
             with open(config.fixed_code_file) as f:
                 self.fixed_code = f.read()
 
-    def forward(self, prompt, input_type='image', prompt_file=None, base_prompt=None, extra_context=None):
+    def forward(self, prompt, image, input_type='image', prompt_file=None, base_prompt=None, extra_context=None):
         if config.use_fixed_code:  # Use the same program for every sample, like in socratic models
             return [self.fixed_code] * len(prompt) if isinstance(prompt, list) else self.fixed_code
 
@@ -1042,21 +1199,35 @@ class CodexModel(BaseModel):
         else:
             raise TypeError("prompt must be a string or a list of strings")
 
-        result = self.forward_(extended_prompt)
+
+
+        if isinstance(image, list):
+            extended_imgs = [img for img in image]
+        elif isinstance(image, PIL.Image.Image):
+            extended_imgs = [image]
+        else:
+            raise TypeError("image must be a PIL.Image.Image or a list of PIL.Image.Image")
+
+
+
+
+        result = self.forward_(extended_prompt, extended_imgs)
         if not isinstance(prompt, list):
             result = result[0]
 
         return result
 
-    def forward_(self, extended_prompt):
+    def forward_(self, extended_prompt, extended_imgs = None):
+        print("Type of extended_imgs: ", type(extended_imgs))
         if len(extended_prompt) > self.max_batch_size:
             response = []
             for i in range(0, len(extended_prompt), self.max_batch_size):
-                response += self.forward_(extended_prompt[i:i + self.max_batch_size])
+                response += self.forward_(extended_prompt[i:i + self.max_batch_size], extended_imgs[i:i + self.max_batch_size])
             return response
         try:
-            response = codex_helper(extended_prompt)
-        except openai.error.RateLimitError as e:
+            # print("Extended Prompt: ", extended_prompt)
+            response = codex_helper(extended_prompt, extended_imgs)
+        except openai.RateLimitError as e:
             print("Retrying Codex, splitting batch")
             if len(extended_prompt) == 1:
                 warnings.warn("This is taking too long, maybe OpenAI is down? (status.openai.com/)")
@@ -1064,12 +1235,17 @@ class CodexModel(BaseModel):
             # It probably means a single batch takes up the entire rate limit.
             sub_batch_1 = extended_prompt[:len(extended_prompt) // 2]
             sub_batch_2 = extended_prompt[len(extended_prompt) // 2:]
+
+
+            sub_batch_1_img = extended_imgs[:len(extended_imgs) // 2]
+            sub_batch_2_img = extended_imgs[len(extended_imgs) // 2:]
+
             if len(sub_batch_1) > 0:
-                response_1 = self.forward_(sub_batch_1)
+                response_1 = self.forward_(sub_batch_1, sub_batch_1_img)
             else:
                 response_1 = []
             if len(sub_batch_2) > 0:
-                response_2 = self.forward_(sub_batch_2)
+                response_2 = self.forward_(sub_batch_2, sub_batch_2_img)
             else:
                 response_2 = []
             response = response_1 + response_2
@@ -1077,7 +1253,7 @@ class CodexModel(BaseModel):
             # Some other error like an internal OpenAI error
             print("Retrying Codex")
             print(e)
-            response = self.forward_(extended_prompt)
+            response = self.forward_(extended_prompt, extended_imgs)
         return response
 
 
@@ -1097,6 +1273,8 @@ class CodeLlama(CodexModel):
         # Load Llama2
         model_id = config.codex.codellama_model_name
 
+        print("Loading CodeLlama model_id: ", model_id)
+
         if model_id.startswith('/'):
             assert os.path.exists(model_id), \
                 f'Model path {model_id} does not exist. If you use the model ID it will be downloaded automatically'
@@ -1114,20 +1292,25 @@ class CodeLlama(CodexModel):
         usage_ratio = 0.15  # If it is small, it will use more GPUs, which will allow larger batch sizes
         leave_empty = 0.7  # If other models are using more than (1-leave_empty) of memory, do not use
         max_memory = {}
+        print("Available GPUs: ", torch.cuda.device_count())
         for gpu_number in range(torch.cuda.device_count()):
             mem_available = torch.cuda.mem_get_info(f'cuda:{gpu_number}')[0]
+            print(f"GPU {gpu_number} mem_available: ", mem_available)
             if mem_available <= leave_empty * torch.cuda.get_device_properties(gpu_number).total_memory:
                 mem_available = 0
             max_memory[gpu_number] = mem_available * usage_ratio
             if gpu_number == 0:
                 max_memory[gpu_number] /= 10
+        print("Max memory: ", max_memory)
         self.model = LlamaForCausalLM.from_pretrained(
             model_id,
             torch_dtype=torch.float16,
             # load_in_8bit=True,  # For some reason this results in OOM when doing forward pass
             device_map="sequential",
             max_memory=max_memory,
+            offload_folder="save_folder"
         )
+        print("CodeLlama model loaded")
         self.model.eval()
 
     def run_codellama(self, prompt):
@@ -1136,6 +1319,7 @@ class CodeLlama(CodexModel):
         generated_ids = generated_ids[:, input_ids.shape[-1]:]
         generated_text = [self.tokenizer.decode(gen_id, skip_special_tokens=True) for gen_id in generated_ids]
         generated_text = [text.split('\n\n')[0] for text in generated_text]
+        print("CodeLlama response: ", generated_text)
         return generated_text
 
     def forward_(self, extended_prompt):
@@ -1255,6 +1439,7 @@ class BLIPModel(BaseModel):
 
         if not self.to_batch:
             response = response[0]
+        # print("Response from BLIP Model: ", response)
         return response
 
 

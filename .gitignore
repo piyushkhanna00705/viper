@@ -11,6 +11,16 @@
 # IPython
 profile_default/
 ipython_config.py
+clip_score_test.py
+feedback_conversation.py
+load_hf_model.py
+maths_reasoning_test.py
+openai_client.py
+playground.py
+run_sample.ipynb
+
+Copy_of_VLR_gounded_sam (2).ipynb
+llava_test.py
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/
@@ -46,6 +56,17 @@ MANIFEST
 data/
 *.pkl
 temp_img/
+
+
+
+*.png
+*.vsix
+*.log
+*.out
+*.txt
+
+api_key.json
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

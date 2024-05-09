@@ -1,0 +1,519 @@
+bin /data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so
+/data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/lib/python3.10/site-packages/bitsandbytes/cuda_setup/main.py:145: UserWarning: /data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2 did not contain ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] as expected! Searching further paths...
+  warn(msg)
+CUDA SETUP: CUDA runtime path found: /usr/local/cuda-11.8/lib64/libcudart.so
+CUDA SETUP: Highest compute capability among GPUs detected: 8.6
+CUDA SETUP: Detected CUDA version 118
+CUDA SETUP: Loading binary /data/tir/projects/tir6/general/piyushkh/.conda/envs/vipergpt2/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so...
+Loading checkpoint shards: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:15<00:00,  2.50s/it]
+Using cache found in /home/piyushkh/.cache/torch/hub/intel-isl_MiDaS_master
+Using cache found in /home/piyushkh/.cache/torch/hub/intel-isl_MiDaS_master
+VISION BACKBONE USE GRADIENT CHECKPOINTING:  False
+LANGUAGE BACKBONE USE GRADIENT CHECKPOINTING:  False
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+EARLY FUSION ON, USING MHA-B
+Model Name:  gpt-3.5-turbo
+Using model:  codex
+Loading queries_small.csv
+Reading csv from:  data/V_Star/direct_attributes/queries_small.csv
+  0%|                                                                                                                                               | 0/1 [00:00<?, ?it/s]Sample path:  data/V_Star/images/direct_attributes/sa_70112.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_31451.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_17.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_9230.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_7668.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_29509.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_27986.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_38669.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_6965.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_10997.jpg
+Query:  ['What is the color of the lock?', 'What is the color of the hat?', "What is the color of the little girl's shirt?", 'What is the color of the bicycle?', 'What is the color of the tent?', 'What is the color of the trash can?', 'What is the color of the life buoy?', "What is the color of the woman's handbag?", "What is the color of the man's cap?", 'What kind of animal is in the poster?']
+Type of extended_imgs:  <class 'list'>
+Type of extended_imgs:  <class 'list'>
+Extended Prompt:  ['from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the lock?\n# possible answers: [\'The color of the lock is silver.\', \'The color of the lock is red.\', \'The color of the lock is yellow.\', \'The color of the lock is golden.\']\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the hat?\n# possible answers: [\'The color of the hat is white.\', \'The color of the hat is black.\', \'The color of the hat is pink.\', \'The color of the hat is yellow.\']\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the little girl\'s shirt?\n# possible answers: ["The color of the little girl\'s shirt is pink.", "The color of the little girl\'s shirt is white.", "The color of the little girl\'s shirt is yellow.", "The color of the little girl\'s shirt is black."]\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the bicycle?\n# possible answers: [\'The color of the bicycle is red.\', \'The color of the bicycle is blue.\', \'The color of the bicycle is white.\', \'The color of the bicycle is silver.\']\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image)->str:']
+Using code gen model gpt-3.5-turbo
+Resp in codex_helper function:  ['def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    lock_patches = image_patch.find("lock")\n    if lock_patches:\n        lock_patch = lock_patches[0]\n        lock_patch_color = lock_patch.simple_query("What is the color?")\n        info = {"Color of lock": lock_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No lock found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    hat_patches = image_patch.find("hat")\n    if hat_patches:\n        hat_patch = hat_patches[0]\n        hat_color = hat_patch.simple_query("What is the color?")\n        info = {"Color of hat": hat_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No hat found in the image"', '```python\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n```', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    bicycle_patches = image_patch.find("bicycle")\n    if bicycle_patches:\n        bicycle_patch = bicycle_patches[0]\n        bicycle_patch_color = bicycle_patch.simple_query("What is the color?")\n        info = {"Color of bicycle": bicycle_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No bicycle found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find("tent")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query("What is the color?")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"']
+Type of extended_imgs:  <class 'list'>
+Extended Prompt:  ['from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the trash can?\n# possible answers: [\'The color of the trash can is black.\', \'The color of the trash can is green.\', \'The color of the trash can is yellow.\', \'The color of the trash can is silver.\']\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the life buoy?\n# possible answers: [\'The color of the life buoy is red and white.\', \'The color of the life buoy is blue and white.\', \'The color of the life buoy is green and white.\', \'The color of the life buoy is yellow and red.\']\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the woman\'s handbag?\n# possible answers: ["The color of the woman\'s handbag is brown.", "The color of the woman\'s handbag is black.", "The color of the woman\'s handbag is white.", "The color of the woman\'s handbag is red."]\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What is the color of the man\'s cap?\n# possible answers: ["The color of the man\'s cap is red.", "The color of the man\'s cap is blue.", "The color of the man\'s cap is white.", "The color of the man\'s cap is gray."]\ndef execute_command(image)->str:', 'from PIL import Image\nfrom vision_functions import obtain_query_response_from_image\nfrom nlp_functions import llm_query, select_answer\n\ndef llm_query(question: str)->str:\n    \'\'\'Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.\n    \n    Parameters\n    ----------\n    question: str\n        the text question to ask. Must not contain any reference to \'the image\' or \'the photo\', etc.\n    \'\'\'\n    return llm_query(question)\n\n\ndef select_answer(info: dict, question: str, options: List[str]) -> str:\n    return select_answer(info, question, options)\n\nclass ImagePatch:\n    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):\n        if left is None and right is None and upper is None and lower is None:\n            self.cropped_image = image\n            self.left = 0\n            self.lower = 0\n            self.right = image.shape[2]\n            self.upper = image.shape[1]\n        else:\n            self.cropped_image = image[:, lower:upper, left:right]\n            self.left = left\n            self.lower = lower\n            self.right = right\n            self.upper = upper\n\n        self.width = self.cropped_image.shape[2]\n        self.height = self.cropped_image.shape[1]\n    \n    def simple_query(self, query: str):\n        """Answer basic queries about the image patch. \n        Parameters\n        ----------\n        query: str\n            the simple query about the image patch in the form of a question\n        \n        Returns\n        -------\n        str\n            a guess for the answer to the question\n        """\n        answer = obtain_query_response_from_image(self.cropped_image, query)\n        return answer\n    \n# Examples of using the ImagePatch class\n\n\n# Does the flag have two or three colors?\n# possible answers: [\'The flag has three colors.\', \'The flag has two colors.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find(""flag"")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = tent_patch.simple_query(""Which colors are present on the flag?"")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n\n\n# What is the color of the tent?\n# possible answers: [\'The color of the tent is green.\', \'The color of the tent is blue.\', \'The color of the tent is white.\', \'The color of the tent is yellow.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find(""tent"")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query(""What is the color?"")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find(""poster"")\n    for poster_patch in poster_patches:\n        if poster_patch.exists(""animal""):\n            animal_in_poster = poster_patch.simple_query(""What kind of animal is in the poster?"")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"\n\n\n\n# What kind of animal is in the poster?\n# possible answers: [\'The animal in the poster is a dove.\', \'The animal in the poster is a cat.\', \'The animal in the poster is a horse.\', \'The animal in the poster is a dog.\']\ndef execute_command(image)->str:']
+Using code gen model gpt-3.5-turbo
+Resp in codex_helper function:  ['def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    trash_can_patches = image_patch.find("trash can")\n    if trash_can_patches:\n        trash_can_patch = trash_can_patches[0]\n        trash_can_color = trash_can_patch.simple_query("What is the color?")\n        info = {"Color of trash can": trash_can_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No trash can found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    life_buoy_patches = image_patch.find("life buoy")\n    if life_buoy_patches:\n        life_buoy_patch = life_buoy_patches[0]\n        life_buoy_color = life_buoy_patch.simple_query("What is the color of the life buoy?")\n        info = {"Color of life buoy": life_buoy_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No life buoy found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"', 'def execute_command(image, possible_answers, query):\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find("poster")\n    for poster_patch in poster_patches:\n        if poster_patch.exists("animal"):\n            animal_in_poster = poster_patch.simple_query("What kind of animal is in the poster?")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"']
+Executing code...
+Codes:  ['def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    lock_patches = image_patch.find("lock")\n    if lock_patches:\n        lock_patch = lock_patches[0]\n        lock_patch_color = lock_patch.simple_query("What is the color?")\n        info = {"Color of lock": lock_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No lock found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    hat_patches = image_patch.find("hat")\n    if hat_patches:\n        hat_patch = hat_patches[0]\n        hat_color = hat_patch.simple_query("What is the color?")\n        info = {"Color of hat": hat_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No hat found in the image"', '```python\ndef execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"\n```', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    bicycle_patches = image_patch.find("bicycle")\n    if bicycle_patches:\n        bicycle_patch = bicycle_patches[0]\n        bicycle_patch_color = bicycle_patch.simple_query("What is the color?")\n        info = {"Color of bicycle": bicycle_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No bicycle found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    tent_patches = image_patch.find("tent")\n    if tent_patches:\n        tent_patch = tent_patches[0]\n        tent_patch_color = tent_patch.simple_query("What is the color?")\n        info = {"Color of tent": tent_patch_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No tent found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    trash_can_patches = image_patch.find("trash can")\n    if trash_can_patches:\n        trash_can_patch = trash_can_patches[0]\n        trash_can_color = trash_can_patch.simple_query("What is the color?")\n        info = {"Color of trash can": trash_can_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No trash can found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    life_buoy_patches = image_patch.find("life buoy")\n    if life_buoy_patches:\n        life_buoy_patch = life_buoy_patches[0]\n        life_buoy_color = life_buoy_patch.simple_query("What is the color of the life buoy?")\n        info = {"Color of life buoy": life_buoy_color}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No life buoy found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"', 'def execute_command(image, possible_answers, query):\n    image_patch = ImagePatch(image)\n    flag_patches = image_patch.find("flag")\n    if flag_patches:\n        flag_patch = flag_patches[0]\n        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")\n        info = {"Colors in the flag": flag_patch_colors}\n        answer = select_answer(info, query, possible_answers)\n        return answer\n    else:\n        return "No flag found in the image"', 'def execute_command(image, possible_answers, query)->str:\n    image_patch = ImagePatch(image)\n    poster_patches = image_patch.find("poster")\n    for poster_patch in poster_patches:\n        if poster_patch.exists("animal"):\n            animal_in_poster = poster_patch.simple_query("What kind of animal is in the poster?")\n            info = {"Animal in the poster": animal_in_poster}\n            answer = select_answer(info, query, possible_answers)\n            return answer\n    return "No animal found in the poster"']
+Batch['sample_id']:  [70112, 31451, 17, 9230, 7668, 29509, 27986, 38669, 6965, 10997]
+Batch['image']:  [<PIL.Image.Image image mode=RGB size=1500x2001 at 0x7FC531F20F10>, <PIL.Image.Image image mode=RGB size=2258x1500 at 0x7FC531C783A0>, <PIL.Image.Image image mode=RGB size=1933x1500 at 0x7FC531C78730>, <PIL.Image.Image image mode=RGB size=2250x1500 at 0x7FC531C788B0>, <PIL.Image.Image image mode=RGB size=2250x1500 at 0x7FC531C78970>, <PIL.Image.Image image mode=RGB size=2264x1500 at 0x7FC531C78A60>, <PIL.Image.Image image mode=RGB size=3267x1500 at 0x7FC531C789D0>, <PIL.Image.Image image mode=RGB size=3299x1500 at 0x7FC531C78BE0>, <PIL.Image.Image image mode=RGB size=1500x2000 at 0x7FC531C78AF0>, <PIL.Image.Image image mode=RGB size=2247x1500 at 0x7FC531C78CA0>]
+Batch['possible_answers']:  ["['The color of the lock is silver.', 'The color of the lock is red.', 'The color of the lock is yellow.', 'The color of the lock is golden.']", "['The color of the hat is white.', 'The color of the hat is black.', 'The color of the hat is pink.', 'The color of the hat is yellow.']", '["The color of the little girl\'s shirt is pink.", "The color of the little girl\'s shirt is white.", "The color of the little girl\'s shirt is yellow.", "The color of the little girl\'s shirt is black."]', "['The color of the bicycle is red.', 'The color of the bicycle is blue.', 'The color of the bicycle is white.', 'The color of the bicycle is silver.']", "['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']", "['The color of the trash can is black.', 'The color of the trash can is green.', 'The color of the trash can is yellow.', 'The color of the trash can is silver.']", "['The color of the life buoy is red and white.', 'The color of the life buoy is blue and white.', 'The color of the life buoy is green and white.', 'The color of the life buoy is yellow and red.']", '["The color of the woman\'s handbag is brown.", "The color of the woman\'s handbag is black.", "The color of the woman\'s handbag is white.", "The color of the woman\'s handbag is red."]', '["The color of the man\'s cap is red.", "The color of the man\'s cap is blue.", "The color of the man\'s cap is white.", "The color of the man\'s cap is gray."]', "['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']"]
+Batch['query']:  ['What is the color of the lock?', 'What is the color of the hat?', "What is the color of the little girl's shirt?", 'What is the color of the bicycle?', 'What is the color of the tent?', 'What is the color of the trash can?', 'What is the color of the life buoy?', "What is the color of the woman's handbag?", "What is the color of the man's cap?", 'What kind of animal is in the poster?']
+GENERATED CODE: def execute_command_70112(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    lock_patches = image_patch.find("lock")
+    if lock_patches:
+        lock_patch = lock_patches[0]
+        lock_patch_color = lock_patch.simple_query("What is the color?")
+        info = {"Color of lock": lock_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No lock found in the image"
+MCQ FEW SHOT PROMPT:  We want to answer a question about a image. We have information about the image. We also have a question, and a list of options. We want to return the option that is most likely to be the correct answer to the question.
+
+Example:
+- Question: how did the boy in stripped open the book to see its contents
+- Caption of middle frame: two children playing on a couch in a living room
+- Is there a girl in the scene: True
+- Possible answers: ['asked the girl for help', 'observe the book', 'stare at the book', 'flip the pages', 'with a bookmark']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: flip the pages
+
+Example:
+- Question: what does the man in checkered do after walking onto the stage with microphone stands at the start
+- Caption of frame after walking onto the stage: a man and woman in a kimono is shown
+- Possible answers: ['take away the stand', 'set up the stand', 'takes out some paper', 'bow to people', 'hands him a bottle']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: set up the stand
+
+Example:
+- Question: what is the relation between the children
+- Caption of frame of interest: a group of children wearing hats is shown
+- Description of children: a group of children sitting in a room with hats on
+- Location: school
+- Possible answers:  ['twins', 'siblings', 'band members', 'classmate', 'friends']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: classmate
+
+Example:
+- Question: what does the man in white at the side do as the girl slide down
+- Caption of frame when the girl slides down: a child playing on a slide in a backyard
+- Action of man: swinging his son
+- Objects in the image: found: [], not found: ['rake', 'cup']
+- Possible answers: ['push the rake again', 'look and walk around', 'push boy on swing', 'drink from cup', 'smiles']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: push boy on swing
+
+Example
+- Question: why does the person in white put the weight onto the rack after carrying it
+- Caption of frame after carrying the weight: a man lifting a barbell in a gym
+- Description of person in white: a man doing a barbell squat
+- Possible answers: ['to support the man', 'be elegant', 'to demostrate', 'part of performance', 'take a break']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: take a break
+
+Example
+- Question:  why was the cup positioned under the tap
+- Caption of frame: a woman pouring a beer at a bar
+- Possible answers: ['get the drink', 'catch spills', 'make cat comfortable with water', 'soapy', 'facilitate sucking for water']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: get the drink
+
+Example:
+- Question: why is the woman wearing a raincoat
+- Caption of frame: scene indoors with a lot of people
+- Possible answers: ['fashion modeling', 'protect from rain', 'cook', 'hug a friend', 'climatology']
+Reason about the question and information provided and select one of the possible answers.
+- Selected answer: fashion modeling
+
+Example:
+- Question: What is the color of the tent?
+- Color of tent: green
+- Possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The color of the tent is green.
+
+Example:
+- Question: What kind of animal is in the poster?
+- Animal in the poster: dove
+- Possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The animal in the poster is a dove.
+
+Example:
+- Question: What is the color of the lock?
+- Color of lock: red
+- Possible answers: ['The color of the lock is silver.', 'The color of the lock is red.', 'The color of the lock is yellow.', 'The color of the lock is golden.']
+Take a close look at the question and information provided and select one of the possible answers.
+- Selected answer:
+GENERATED CODE: def execute_command_31451(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    hat_patches = image_patch.find("hat")
+    if hat_patches:
+        hat_patch = hat_patches[0]
+        hat_color = hat_patch.simple_query("What is the color?")
+        info = {"Color of hat": hat_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No hat found in the image"
+GENERATED CODE: def execute_command_17(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:```python
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    flag_patches = image_patch.find("flag")
+    if flag_patches:
+        flag_patch = flag_patches[0]
+        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")
+        info = {"Colors in the flag": flag_patch_colors}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No flag found in the image"
+```
+Sample 17 failed at compilation time with error: expected an indented block after function definition on line 1 (Codex, line 3)
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 78, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_17
+    import pathlib
+NameError: name 'question' is not defined
+Sample 17 failed with error: name 'question' is not defined. Next you will see an "expected an indented block" error.
+GENERATED CODE: def execute_command_17(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:[
+Sample 17 failed at compilation time with error: expected an indented block after function definition on line 1 (Codex, line 2)
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 78, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_17
+    import pathlib
+NameError: name 'question' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/tir/projects/tir6/general/piyushkh/viper/main_batch.py", line 78, in run_program
+    result = globals()[f'execute_command_{sample_id}'](
+  File "Codex", line 4, in execute_command_17
+    import pathlib
+NameError: name 'question' is not defined
+GENERATED CODE: def execute_command_9230(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    bicycle_patches = image_patch.find("bicycle")
+    if bicycle_patches:
+        bicycle_patch = bicycle_patches[0]
+        bicycle_patch_color = bicycle_patch.simple_query("What is the color?")
+        info = {"Color of bicycle": bicycle_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No bicycle found in the image"
+MCQ FEW SHOT PROMPT:  We want to answer a question about a image. We have information about the image. We also have a question, and a list of options. We want to return the option that is most likely to be the correct answer to the question.
+
+Example:
+- Question: how did the boy in stripped open the book to see its contents
+- Caption of middle frame: two children playing on a couch in a living room
+- Is there a girl in the scene: True
+- Possible answers: ['asked the girl for help', 'observe the book', 'stare at the book', 'flip the pages', 'with a bookmark']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: flip the pages
+
+Example:
+- Question: what does the man in checkered do after walking onto the stage with microphone stands at the start
+- Caption of frame after walking onto the stage: a man and woman in a kimono is shown
+- Possible answers: ['take away the stand', 'set up the stand', 'takes out some paper', 'bow to people', 'hands him a bottle']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: set up the stand
+
+Example:
+- Question: what is the relation between the children
+- Caption of frame of interest: a group of children wearing hats is shown
+- Description of children: a group of children sitting in a room with hats on
+- Location: school
+- Possible answers:  ['twins', 'siblings', 'band members', 'classmate', 'friends']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: classmate
+
+Example:
+- Question: what does the man in white at the side do as the girl slide down
+- Caption of frame when the girl slides down: a child playing on a slide in a backyard
+- Action of man: swinging his son
+- Objects in the image: found: [], not found: ['rake', 'cup']
+- Possible answers: ['push the rake again', 'look and walk around', 'push boy on swing', 'drink from cup', 'smiles']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: push boy on swing
+
+Example
+- Question: why does the person in white put the weight onto the rack after carrying it
+- Caption of frame after carrying the weight: a man lifting a barbell in a gym
+- Description of person in white: a man doing a barbell squat
+- Possible answers: ['to support the man', 'be elegant', 'to demostrate', 'part of performance', 'take a break']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: take a break
+
+Example
+- Question:  why was the cup positioned under the tap
+- Caption of frame: a woman pouring a beer at a bar
+- Possible answers: ['get the drink', 'catch spills', 'make cat comfortable with water', 'soapy', 'facilitate sucking for water']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: get the drink
+
+Example:
+- Question: why is the woman wearing a raincoat
+- Caption of frame: scene indoors with a lot of people
+- Possible answers: ['fashion modeling', 'protect from rain', 'cook', 'hug a friend', 'climatology']
+Reason about the question and information provided and select one of the possible answers.
+- Selected answer: fashion modeling
+
+Example:
+- Question: What is the color of the tent?
+- Color of tent: green
+- Possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The color of the tent is green.
+
+Example:
+- Question: What kind of animal is in the poster?
+- Animal in the poster: dove
+- Possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The animal in the poster is a dove.
+
+Example:
+- Question: What is the color of the bicycle?
+- Color of bicycle: red
+- Possible answers: ['The color of the bicycle is red.', 'The color of the bicycle is blue.', 'The color of the bicycle is white.', 'The color of the bicycle is silver.']
+Take a close look at the question and information provided and select one of the possible answers.
+- Selected answer:
+GENERATED CODE: def execute_command_7668(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    tent_patches = image_patch.find("tent")
+    if tent_patches:
+        tent_patch = tent_patches[0]
+        tent_patch_color = tent_patch.simple_query("What is the color?")
+        info = {"Color of tent": tent_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No tent found in the image"
+MCQ FEW SHOT PROMPT:  We want to answer a question about a image. We have information about the image. We also have a question, and a list of options. We want to return the option that is most likely to be the correct answer to the question.
+
+Example:
+- Question: how did the boy in stripped open the book to see its contents
+- Caption of middle frame: two children playing on a couch in a living room
+- Is there a girl in the scene: True
+- Possible answers: ['asked the girl for help', 'observe the book', 'stare at the book', 'flip the pages', 'with a bookmark']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: flip the pages
+
+Example:
+- Question: what does the man in checkered do after walking onto the stage with microphone stands at the start
+- Caption of frame after walking onto the stage: a man and woman in a kimono is shown
+- Possible answers: ['take away the stand', 'set up the stand', 'takes out some paper', 'bow to people', 'hands him a bottle']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: set up the stand
+
+Example:
+- Question: what is the relation between the children
+- Caption of frame of interest: a group of children wearing hats is shown
+- Description of children: a group of children sitting in a room with hats on
+- Location: school
+- Possible answers:  ['twins', 'siblings', 'band members', 'classmate', 'friends']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: classmate
+
+Example:
+- Question: what does the man in white at the side do as the girl slide down
+- Caption of frame when the girl slides down: a child playing on a slide in a backyard
+- Action of man: swinging his son
+- Objects in the image: found: [], not found: ['rake', 'cup']
+- Possible answers: ['push the rake again', 'look and walk around', 'push boy on swing', 'drink from cup', 'smiles']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: push boy on swing
+
+Example
+- Question: why does the person in white put the weight onto the rack after carrying it
+- Caption of frame after carrying the weight: a man lifting a barbell in a gym
+- Description of person in white: a man doing a barbell squat
+- Possible answers: ['to support the man', 'be elegant', 'to demostrate', 'part of performance', 'take a break']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: take a break
+
+Example
+- Question:  why was the cup positioned under the tap
+- Caption of frame: a woman pouring a beer at a bar
+- Possible answers: ['get the drink', 'catch spills', 'make cat comfortable with water', 'soapy', 'facilitate sucking for water']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: get the drink
+
+Example:
+- Question: why is the woman wearing a raincoat
+- Caption of frame: scene indoors with a lot of people
+- Possible answers: ['fashion modeling', 'protect from rain', 'cook', 'hug a friend', 'climatology']
+Reason about the question and information provided and select one of the possible answers.
+- Selected answer: fashion modeling
+
+Example:
+- Question: What is the color of the tent?
+- Color of tent: green
+- Possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The color of the tent is green.
+
+Example:
+- Question: What kind of animal is in the poster?
+- Animal in the poster: dove
+- Possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The animal in the poster is a dove.
+
+Example:
+- Question: What is the color of the tent?
+- Color of tent: green
+- Possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+Take a close look at the question and information provided and select one of the possible answers.
+- Selected answer:
+GENERATED CODE: def execute_command_29509(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    trash_can_patches = image_patch.find("trash can")
+    if trash_can_patches:
+        trash_can_patch = trash_can_patches[0]
+        trash_can_color = trash_can_patch.simple_query("What is the color?")
+        info = {"Color of trash can": trash_can_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No trash can found in the image"
+GENERATED CODE: def execute_command_27986(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    life_buoy_patches = image_patch.find("life buoy")
+    if life_buoy_patches:
+        life_buoy_patch = life_buoy_patches[0]
+        life_buoy_color = life_buoy_patch.simple_query("What is the color of the life buoy?")
+        info = {"Color of life buoy": life_buoy_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No life buoy found in the image"
+GENERATED CODE: def execute_command_38669(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    flag_patches = image_patch.find("flag")
+    if flag_patches:
+        flag_patch = flag_patches[0]
+        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")
+        info = {"Colors in the flag": flag_patch_colors}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No flag found in the image"
+GENERATED CODE: def execute_command_6965(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query):
+    image_patch = ImagePatch(image)
+    flag_patches = image_patch.find("flag")
+    if flag_patches:
+        flag_patch = flag_patches[0]
+        flag_patch_colors = flag_patch.simple_query("Which colors are present on the flag?")
+        info = {"Colors in the flag": flag_patch_colors}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+        return "No flag found in the image"
+GENERATED CODE: def execute_command_10997(image, possible_answers, query, ImagePatch, VideoSegment, llm_query, bool_to_yesno, distance, best_image_match, select_answer):
+    # Answer is:def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    poster_patches = image_patch.find("poster")
+    for poster_patch in poster_patches:
+        if poster_patch.exists("animal"):
+            animal_in_poster = poster_patch.simple_query("What kind of animal is in the poster?")
+            info = {"Animal in the poster": animal_in_poster}
+            answer = select_answer(info, query, possible_answers)
+            return answer
+    return "No animal found in the poster"
+MCQ FEW SHOT PROMPT:  We want to answer a question about a image. We have information about the image. We also have a question, and a list of options. We want to return the option that is most likely to be the correct answer to the question.
+
+Example:
+- Question: how did the boy in stripped open the book to see its contents
+- Caption of middle frame: two children playing on a couch in a living room
+- Is there a girl in the scene: True
+- Possible answers: ['asked the girl for help', 'observe the book', 'stare at the book', 'flip the pages', 'with a bookmark']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: flip the pages
+
+Example:
+- Question: what does the man in checkered do after walking onto the stage with microphone stands at the start
+- Caption of frame after walking onto the stage: a man and woman in a kimono is shown
+- Possible answers: ['take away the stand', 'set up the stand', 'takes out some paper', 'bow to people', 'hands him a bottle']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: set up the stand
+
+Example:
+- Question: what is the relation between the children
+- Caption of frame of interest: a group of children wearing hats is shown
+- Description of children: a group of children sitting in a room with hats on
+- Location: school
+- Possible answers:  ['twins', 'siblings', 'band members', 'classmate', 'friends']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: classmate
+
+Example:
+- Question: what does the man in white at the side do as the girl slide down
+- Caption of frame when the girl slides down: a child playing on a slide in a backyard
+- Action of man: swinging his son
+- Objects in the image: found: [], not found: ['rake', 'cup']
+- Possible answers: ['push the rake again', 'look and walk around', 'push boy on swing', 'drink from cup', 'smiles']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: push boy on swing
+
+Example
+- Question: why does the person in white put the weight onto the rack after carrying it
+- Caption of frame after carrying the weight: a man lifting a barbell in a gym
+- Description of person in white: a man doing a barbell squat
+- Possible answers: ['to support the man', 'be elegant', 'to demostrate', 'part of performance', 'take a break']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: take a break
+
+Example
+- Question:  why was the cup positioned under the tap
+- Caption of frame: a woman pouring a beer at a bar
+- Possible answers: ['get the drink', 'catch spills', 'make cat comfortable with water', 'soapy', 'facilitate sucking for water']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: get the drink
+
+Example:
+- Question: why is the woman wearing a raincoat
+- Caption of frame: scene indoors with a lot of people
+- Possible answers: ['fashion modeling', 'protect from rain', 'cook', 'hug a friend', 'climatology']
+Reason about the question and information provided and select one of the possible answers.
+- Selected answer: fashion modeling
+
+Example:
+- Question: What is the color of the tent?
+- Color of tent: green
+- Possible answers: ['The color of the tent is green.', 'The color of the tent is blue.', 'The color of the tent is white.', 'The color of the tent is yellow.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The color of the tent is green.
+
+Example:
+- Question: What kind of animal is in the poster?
+- Animal in the poster: dove
+- Possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+Take a close look at the question and information provided and select one of the possible answers
+- Selected answer: The animal in the poster is a dove.
+
+Example:
+- Question: What kind of animal is in the poster?
+- Animal in the poster: dove
+- Possible answers: ['The animal in the poster is a dove.', 'The animal in the poster is a cat.', 'The animal in the poster is a horse.', 'The animal in the poster is a dog.']
+Take a close look at the question and information provided and select one of the possible answers.
+- Selected answer:
+Sample path:  data/V_Star/images/direct_attributes/sa_70112.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_31451.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_17.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_9230.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_7668.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_29509.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_27986.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_38669.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_6965.jpg
+Sample path:  data/V_Star/images/direct_attributes/sa_10997.jpg
+Accuracy at Batch 0/1: 0.0
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:37<00:00, 37.10s/it]
+Final accuracy: 0.0
+Saving results to results_39.csv

@@ -1,0 +1,131 @@
+from PIL import Image
+from vision_functions import obtain_query_response_from_image
+from nlp_functions import llm_query, select_answer
+
+def llm_query(question: str)->str:
+    '''Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.
+    
+    Parameters
+    ----------
+    question: str
+        the text question to ask. Must not contain any reference to 'the image' or 'the photo', etc.
+    Returns
+    -------
+    str
+        answer provided by GPT-3 for the given question.
+
+    '''
+    return llm_query(question)
+
+
+def select_answer(info: dict, question: str, options: List[str]) -> str:
+    '''Answers a text question using GPT-3 given a list of options. The input question is always a formatted string with a variable in it. The options are the candidate answers out of which the correct answer must be chosen.
+    
+    Parameters
+    ----------
+    question: str
+        the text question to ask. Must not contain any reference to 'the image' or 'the photo', etc.
+    options: str
+        the list of options to choose the correct answer from.
+    Returns
+    -------
+    str
+        answer selected by GPT-3 for the given question from the provided options.
+    '''
+    return select_answer(info, question, options)
+
+class ImagePatch:
+    def __init__(self, image, left: int=None, lower: int=None, right: int=None, upper: int=None):
+        if left is None and right is None and upper is None and lower is None:
+            self.cropped_image = image
+            self.left = 0
+            self.lower = 0
+            self.right = image.shape[2]
+            self.upper = image.shape[1]
+        else:
+            self.cropped_image = image[:, lower:upper, left:right]
+            self.left = left
+            self.lower = lower
+            self.right = right
+            self.upper = upper
+
+        self.width = self.cropped_image.shape[2]
+        self.height = self.cropped_image.shape[1]
+    
+    def simple_query_llava(self, query: str):
+        """Answer basic queries about the image patch. 
+        Parameters
+        ----------
+        query: str
+            the simple query about the image patch in the form of a question
+        
+        Returns
+        -------
+        str
+            a guess for the answer to the question
+        """
+        answer = obtain_query_response_from_image(self.cropped_image, query)
+        return answer
+    def visual_search(self, search_object : str, query : str, possible_answers : List[str]):
+        """Initates a visual search to find the search_object in the image for answering the related question. 
+        Parameters
+        ----------
+        search_object: str
+            the object to find inside the image to answer the query
+        query: str
+            the simple query about the image patch in the form of a question
+        possible_answers : List[str]
+            the list of possible_answers to choose the correct answer from.
+        Returns
+        -------
+        str
+            a guess for the answer to the question
+        """
+        answer = search_for_object_in_the_image(self.cropped_image, search_object)
+        return answer
+
+    
+# Examples of using the ImagePatch class
+
+# Does the flag have two or three colors?
+# possible answers: ['The flag has three colors.', 'The flag has two colors.']
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    #The question requires the colors on the flag, so we first try to find the flag in the image.
+    if image_patch.object_exists("flag"):
+        flag_patch_colors = image_patch.simple_query_llava(""Which colors are present on the flag?"")
+        info = {"Colors in the flag": flag_patch_colors}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+    # We did not find the object in the question- flag, so we need to call the visual search module to find it first.
+        search_object = "flag"
+        visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+        if visual_search_ans:
+            return visual_search_ans
+        return select_answer(info, query, possible_answers)
+
+# What is the color of the little girl's shirt?
+# possible answers: ["The color of the little girl's shirt is pink.", "The color of the little girl's shirt is white.", "The color of the little girl's shirt is yellow.", "The color of the little girl's shirt is black."]
+def execute_command(image, possible_answers, query)->str:
+    image_patch = ImagePatch(image)
+    info = None
+    # The question requires the color of the little girl's shirt, so we first try to find the liitle girl in the image.
+    if image_patch.object_exists("little girl"):
+        little_girl_shirt_patch_color = image_patch.simple_query_llava(""What is the color of the little girl's shirt?"")
+        info = {"Color of little girl's shirt": little_girl_shirt_patch_color}
+        answer = select_answer(info, query, possible_answers)
+        return answer
+    else:
+    # We did not find the object in the question- little girl, so we need to call the visual search module.
+        search_object = "little girl"
+        visual_search_ans = image_patch.visual_search(search_object, query, possible_answers):
+        if visual_search_ans:
+            return visual_search_ans
+        return select_answer(info, query, possible_answers)
+
+
+# INSERT_QUERY_HERE
+# possible answers: EXTRA_CONTEXT_HERE
+def execute_command(image)->str:

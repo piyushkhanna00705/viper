@@ -8,7 +8,7 @@ import sys
 
 def hf_generate_code(prompt):
     print("Inside hf_generate_code, loading model...")
-    model_path = "/data/datasets/models/huggingface/meta-llama/CodeLlama-7b-Instruct-hf"
+    model_path = "/data/datasets/models/huggingface/meta-llama/CodeLlama-34b-Python-hf"
     #Todo: Instruct version
     
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)

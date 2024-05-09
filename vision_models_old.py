@@ -1030,7 +1030,7 @@ class CodexModel(BaseModel):
         #Make changes here for adding image captioning. Only chatapi.prompt file is used here. api.prompt not used anywhere.
         # print("Caption: ", caption)
         # print("Caption type: ", type(caption))
-        # print("Prompt: ", prompt)
+        print("Base_Prompt: ", base_prompt)
         extended_prompt = []
         if isinstance(prompt, list):
             for p, c in zip(prompt, caption):
@@ -1060,7 +1060,7 @@ class CodexModel(BaseModel):
                 response += self.forward_(extended_prompt[i:i + self.max_batch_size])
         try:
             response = codex_helper(extended_prompt)
-        except openai.error.RateLimitError as e:
+        except openai.RateLimitError as e:
             print("Retrying Codex, splitting batch")
             if len(extended_prompt) == 1:
                 warnings.warn("This is taking too long, maybe OpenAI is down? (status.openai.com/)")

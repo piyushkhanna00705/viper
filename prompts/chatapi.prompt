@@ -336,5 +336,4 @@ Consider the following guidelines:
 - Use base Python (comparison, sorting) for basic logical operations, left/right/up/down, math, etc.
 - Use the llm_query function to access external information and answer informational questions not concerning the image.
 
-Caption: INSERT_CAPTION_HERE
 Query: INSERT_QUERY_HERE

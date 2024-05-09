@@ -10,6 +10,28 @@ from torchvision import transforms
 from torchvision.ops import box_iou
 from typing import Union, List
 from word2number import w2n
+from torchvision.utils import save_image
+import torchvision
+import torchvision.transforms as T
+import math
+
+
+from llama_index.core.multi_modal_llms.generic_utils import load_image_urls
+from llama_index.core.schema import ImageDocument
+
+import torch
+from torchmetrics.multimodal.clip_score import CLIPScore
+
+
+
+from llava_image_caption import run_llava_captions
+
+# from torchmetrics.multimodal.clip_score import CLIPScore
+
+import os
+
+os.environ['HF_HOME'] = '/data/tir/projects/tir6/general/piyushkh/hf/'
+
 
 from utils import show_single_image, load_json
 from vision_processes import forward, config
@@ -98,6 +120,11 @@ class ImagePatch:
         self.height = self.cropped_image.shape[1]
         self.width = self.cropped_image.shape[2]
 
+        self.transform_to_pil = T.ToPILImage()
+        
+        # print("Type of self.cropped_image", type(self.cropped_image))
+        # print("self.cropped_image: ", self.cropped_image)
+
         self.cache = {}
         self.queues = (None, None) if queues is None else queues
 
@@ -183,7 +210,8 @@ class ImagePatch:
     def _score(self, category: str, negative_categories=None, model='clip') -> float:
         """
         Returns a binary score for the similarity between the image and the category.
-        The negative categories are used to compare to (score is relative to the scores of the negative categories).
+        The negative categories are used to 
+        compare to (score is relative to the scores of the negative categories).
         """
         if model == 'clip':
             res = self.forward('clip', self.cropped_image, category, task='score',
@@ -196,6 +224,158 @@ class ImagePatch:
             res = res.item()
 
         return res
+    
+    def object_exists(self, object_name: str):
+        return run_llava_captions(self.transform_to_pil(self.cropped_image), prompt = f"Does the image contain {object_name}? Respond with only Yes or No") == 'Yes'
+
+    def simple_query_llava(self, query: str):
+        return run_llava_captions(self.transform_to_pil(self.cropped_image), prompt = query)
+
+    def visual_search(self, search_object, query, possible_answers):
+        num_patches_widths = [4, 2, 1]
+        # num_patches_widths = [32]
+        blip_ques = "Write a detailed yet concise description of this image, in under 100 words."
+        working_image = self
+        for num_patches_width in num_patches_widths:
+            intermediate_search_patch, caption_num = working_image._visual_search_patch(num_patches_width, blip_ques = blip_ques, query = query, search_object = search_object, overlap_pct = 0)
+            if not intermediate_search_patch:
+                continue
+
+
+            working_image = intermediate_search_patch
+            
+            #Delete this line after debugging
+            # save_image(working_image.cropped_image, 'sample_patch_working_image_32patch_sa_17_' + str(num_patches_width) + '.png')
+            
+            
+
+            # print("Intermediate Search Patch Search Object Exists Blip? ", working_image.exists(search_object))
+            # print("Intermediate Search Patch Search Object Exists Llava? ", run_llava_captions(self.transform_to_pil(working_image.cropped_image), prompt = f"Does the image contain {search_object}? Respond with only Yes or No"))            
+
+            if run_llava_captions(self.transform_to_pil(working_image.cropped_image), prompt = f"Does the image contain {search_object}? Respond with only Yes or No") == 'Yes':
+                llava_mcq_prompt = f"""
+                {query}
+                A. {possible_answers[0]}
+                B. {possible_answers[1]}
+                C. {possible_answers[2]}
+                D. {possible_answers[3]}
+                """
+                answer_llava_mcq = run_llava_captions(self.transform_to_pil(intermediate_search_patch.cropped_image), prompt = llava_mcq_prompt)
+                print("Llava answer = ", answer_llava_mcq)
+                return answer_llava_mcq
+        return None
+
+
+
+    
+    def _visual_search_patch(self, num_patches_width, blip_ques = None, query = None, search_object = None, overlap_pct = 0):
+        prompt = f"""Choose the most appropriate caption that helps you answer the question:
+        {query} and explain why you chose it."""
+        channels, height, width = self.cropped_image.shape
+
+        num_patches_height = 2  # Divide height into 2 patches
+
+        patch_height = height // num_patches_height
+        patch_width = width // num_patches_width
+
+        patches = self.cropped_image.unfold(1, patch_height, math.ceil(patch_height - overlap_pct*patch_height)).unfold(2, patch_width, math.ceil(patch_width - overlap_pct*patch_width))
+        patches = patches.contiguous().view(channels, -1, patch_height, patch_width)
+        print(patches.shape)
+        all_image_patches = []
+        map_patch_to_index = {}
+
+        print("patches.shape[1] length: ", patches.shape[1])
+
+        for i in range(patches.shape[1]):
+        # for i in range(num_patches_height):
+        #     for j in range(num_patches_width):
+                # small_patch = patches[:,i,j,:,:]
+                small_patch = patches[:,i,:,:]
+                # if i==1:
+                #     save_image(small_patch, 'sample_patch_contiguous' + str(i) + '.png')
+                curr_img_patch = ImagePatch(small_patch, 0, 0, patch_width, patch_height, 0, 0, queues=self.queues, parent_img_patch=self)
+                map_patch_to_index[str(i)] = curr_img_patch
+                # img_descr_patch = self.forward('blip', all_image_patches[-1].cropped_image, blip_ques, task='qa')
+                img_descr_patch = run_llava_captions(self.transform_to_pil(curr_img_patch.cropped_image))
+
+                # print(f"CLIP Score b/w patch {i}{j} and {search_object}: ", get_clip_score(all_image_patches[-1].cropped_image, query))
+
+                prompt = prompt + f"\n Caption {i}: " + img_descr_patch
+        
+        # print("GPT-3.5 Prompt with captions: ", prompt)
+        
+        gpt_patch_answer = llm_query(prompt)
+        print("GPT-3.5 final answer for choosing correct image crop: ", gpt_patch_answer)
+
+        caption_number = re.search(r'Caption (\d+)', gpt_patch_answer)
+        if caption_number:
+            print("Found Caption match at: ")
+            print(caption_number.group(1))
+            # print("Mapped index to patch: ", map_patch_to_index[str(caption_number.group(1))])
+            self = map_patch_to_index[str(caption_number.group(1))]
+            return self, caption_number.group(1)
+        return None, None 
+
+        # pattern = r'Caption (\d)(\d)(\d)'
+        # match = re.search(pattern, gpt_patch_answer)
+        # print("Caption Match: ", match)
+        # if match:
+        #     i = int(match.group(1))
+        #     j = int(match.group(2))
+        #     print("Caption Match found at: ", i, j)
+            
+        #     self = all_image_patches[map_patch_to_index[(i, j)]]
+        #     return self, i, j
+        # else:
+        #     return None
+        #             # save_image(small_patch, 'sample_patch' + str(i) + str(j) + '.png')
+        # return
+
+
+        # metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
+
+        """If no question is provided, returns the answer to "What is this?"""
+        # cropped_image_left_half = self.crop(self.left, self.lower, (self.left + self.right) // 2, self.upper)
+        cropped_image_left_half = ImagePatch(self.cropped_image, self.left, self.lower, (self.left + self.right) // 2, self.upper, self.left, self.lower, queues=self.queues,
+                          parent_img_patch=self)
+
+        # cropped_image_right_half = self.crop((self.left + self.right) // 2, self.lower, self.right, self.upper)
+        cropped_image_right_half = ImagePatch(self.cropped_image, (self.left + self.right) // 2, self.lower, self.right, self.upper, self.left, self.lower, queues=self.queues,
+                          parent_img_patch=self)
+        save_image(cropped_image_right_half.cropped_image, 'sample_right.png')
+
+        img_descr_left = self.forward('blip', cropped_image_left_half.cropped_image, blip_ques, task='qa')
+
+        # print("cropped_image_left_half.cropped_image", cropped_image_left_half.cropped_image)
+        # print("cropped_image_left_half.cropped_image type: ", type(cropped_image_left_half.cropped_image))
+        # print("cropped_image_left_half.cropped_image shape: ", type(cropped_image_left_half.cropped_image.shape))
+
+        # clip_score_left = metric(cropped_image_left_half.cropped_image, "trash can", "openai/clip-vit-base-patch16")
+        # print("clip_score_left: ", clip_score_left)
+
+        print("img_descr_left = ", img_descr_left)
+        save_image(cropped_image_left_half.cropped_image, 'sample_left.png')
+
+        img_descr_right = self.forward('blip', cropped_image_right_half.cropped_image, blip_ques, task='qa')
+
+        # clip_score_right = metric(cropped_image_right_half.cropped_image, "trash can", "openai/clip-vit-base-patch16")
+        # print("clip_score_left: ", clip_score_right)
+
+        print("img_descr_right = ", img_descr_right)
+
+        answer = select_answer_image_crop(ques, img_descr_left, img_descr_right)
+
+        print("GPT-3.5 answer for image crop: ", answer)
+
+        if answer == "Left":
+            return cropped_image_left_half
+        else:
+            return cropped_image_right_half
+
+        
+
+
+
 
     def _detect(self, category: str, thresh, negative_categories=None, model='clip') -> bool:
         return self._score(category, negative_categories, model) > thresh
@@ -259,6 +439,7 @@ class ImagePatch:
         question : str
             A string describing the question to be asked.
         """
+        print("simple_query question: ", question)
         return self.forward('blip', self.cropped_image, question, task='qa')
 
     def compute_depth(self):
@@ -377,6 +558,27 @@ def best_image_match(list_patches: list[ImagePatch], content: List[str], return_
     return list_patches[scores]
 
 
+def get_clip_score(image: torch.Tensor, caption: str) -> float:
+    """Returns the CLIP score for the similarity between the image and the text.
+    Parameters
+    ----------
+    image : torch.Tensor
+        the image tensor
+    text : str
+        the text to compare the image to
+
+    Returns
+    -------
+    float
+        the CLIP score for the similarity between the image and the text
+    """
+    metric = CLIPScore(model_name_or_path="openai/clip-vit-base-patch16")
+    score = metric(image, caption)
+    print(score.detach())
+
+    return score.detach().item()
+
+
 def distance(patch_a: Union[ImagePatch, float], patch_b: Union[ImagePatch, float]) -> float:
     """
     Returns the distance between the edges of two ImagePatches, or between two floats.
@@ -432,6 +634,41 @@ def llm_query(query, context=None, long_answer=True, queues=None):
         return forward(model_name='gpt3_general', prompt=query, queues=queues)
     else:
         return forward(model_name='gpt3_qa', prompt=[query, context], queues=queues)
+    
+
+
+
+def select_answer(info = None, question = None, options=None) -> str:
+    def format_dict(x):
+        if isinstance(x, dict):
+            x = ''.join([f'\n\t- {k}: {format_dict(v)}' for k, v in x.items()])
+        return x
+    with open(config.select_answer_prompt, 'r') as f:
+        prompt = f.read()
+    if info is not None:
+        info_formatting = '\n'.join([f"- {k}: {format_dict(v)}" for k, v in info.items()])
+        prompt = prompt.format(info=info_formatting, question=question, options=options)
+    else:
+        prompt = prompt.format(info="", question=question, options=options)
+    # print("MCQ FEW SHOT PROMPT: ", prompt)
+    answer = forward(model_name = 'gpt3_general', prompt = prompt)
+    answer = answer.strip()
+    return answer
+
+def select_answer_image_crop(question: str, left_image_caption, right_image_caption) -> str:
+    def format_dict(x):
+        if isinstance(x, dict):
+            x = ''.join([f'\n\t- {k}: {format_dict(v)}' for k, v in x.items()])
+        return x
+    with open("/data/tir/projects/tir6/general/piyushkh/viper/prompts/gpt3/crop_image_prompt.txt", 'r') as f:
+        prompt = f.read()
+    prompt = prompt.format(question=question, left_image_caption=left_image_caption, right_image_caption=right_image_caption)
+    # print("MCQ FEW SHOT PROMPT: ", prompt)
+    answer = forward(model_name = 'gpt3_general', prompt = prompt)
+    answer = answer.strip()
+    return answer
+
+
 
 
 def process_guesses(prompt, guess1=None, guess2=None, queues=None):

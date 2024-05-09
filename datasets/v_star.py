@@ -11,9 +11,9 @@ import base64
 from datasets import accuracy as general_accuracy
 
 
-class MyDataset(Dataset):
+class V_Star(Dataset):
     def __init__(self, split, data_path="", input_type='image', image_transforms=None, fps=30, max_num_frames=30,
-                 max_samples=None, start_sample=0, dataset_size='full', captions=False, **kwargs):
+                 max_samples=None, start_sample=0, dataset_size='full', task_type = "direct_attributes", captions=False, **kwargs):
         """
         Args:
             split (str): Data split.
@@ -33,6 +33,7 @@ class MyDataset(Dataset):
         self.image_transforms = image_transforms
         self.fps = fps
         self.max_num_frames = max_num_frames
+        self.task_type = task_type
 
         # Load questions, answers, and image ids
         if dataset_size == 'full':
@@ -48,7 +49,9 @@ class MyDataset(Dataset):
 
         print("Loading {}".format(file_name))
 
-        with open(self.data_path / self.split / file_name, 'r') as f:
+        print("Reading csv from: ", self.data_path / self.task_type / file_name)
+
+        with open(self.data_path / self.task_type / file_name, 'r') as f:
             # The csv has the rows [query, answer, image_name or video_name]
             self.df = pd.read_csv(f, index_col=None, keep_default_na=False)
 
@@ -57,9 +60,15 @@ class MyDataset(Dataset):
 
         self.n_samples = len(self.df)
 
+        #append options to df['query']
+        # self.df['query'] = self.df['query'] + ' Options: ' + self.df['possible_answers'].apply(lambda x: ' '.join(x.split(',')))
+
+    #Make change here for processing images.
     def get_sample_path(self, index):
         sample_name = self.df.iloc[index][f"{self.input_type}_name"]
-        sample_path = self.data_path / f"{self.input_type}s" / sample_name
+        #                 data/V_Star /       images/          direct_attributes/ sa_70112.jpg
+        sample_path = self.data_path / f"{self.input_type}s" / self.task_type / sample_name
+        print("Sample path: ", sample_path)
         return sample_path
 
     def get_image(self, image_path):
@@ -111,14 +120,26 @@ class MyDataset(Dataset):
         out_dict["index"] = index
         out_dict["image_base64"] = image_base64
 
-        if 'extra_context' not in out_dict:
-            out_dict['extra_context'] = ''
+        # if 'extra_context' not in out_dict:
+        out_dict['extra_context'] = out_dict['possible_answers']
 
         return out_dict
 
     def __len__(self):
         return self.n_samples
 
+    #Prediction: all_results
+    #Ground Truth: all_answers
     @classmethod
-    def accuracy(cls, *args, **kwargs):
-        return general_accuracy(*args, **kwargs)
+    def accuracy(cls, all_results, all_answers, all_possible_answers, all_query_types):
+        # print("INSIDE V_STAR ACCURACY METRIC")
+        score = 0
+        for pred, gt in zip(all_results, all_answers):
+            # print("Pred: ", pred)
+            # print("GT: ", gt)
+            if pred == gt:
+                score += 1
+        return score / len(all_results)
+
+
+        

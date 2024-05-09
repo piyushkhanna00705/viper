@@ -39,11 +39,11 @@ class OKVQADataset(Dataset):
         "train": ("train2014", "OpenEnded_mscoco_train2014_questions.json", "mscoco_train2014_annotations.json"),
         "test": ("val2014", "OpenEnded_mscoco_val2014_questions.json", "mscoco_val2014_annotations.json")}
 
-    def __init__(self, split, data_path="",
+    def __init__(self, split, data_path="", dataset_size='full',
                  image_transforms=None, question_transforms=None, tokenize=None,
                  # answer_selection=most_common_from_dict,
-                 answer_selection=all_answers_from_dict,
-                 verbose=False, testing=False, max_samples=None):
+                #  answer_selection=all_answers_from_dict,
+                 verbose=False, testing=False, max_samples=None, **kwargs):
         """
         split train, val, test
         balanced True, False
@@ -55,7 +55,7 @@ class OKVQADataset(Dataset):
         start_time = time.time()
         self.split = split
         self.testing = testing
-        self.answer_selection = answer_selection
+        # self.answer_selection = answer_selection
         assert split in ["train", "test"]
         self.data_path = data_path
         self.image_transforms = image_transforms
@@ -71,24 +71,42 @@ class OKVQADataset(Dataset):
         path = os.path.expanduser(os.path.join(data_path, self.IMAGE_PATH[split][1]))
         with open(path, 'r') as f:
             data = json.load(f)
-        df = pd.DataFrame(data["questions"])
-        df["image_path"] = df["image_id"].apply(
-            lambda x: f"{self.IMAGE_PATH[split][0]}/COCO_{self.IMAGE_PATH[split][0]}_{x:012d}.jpg")
+
+        if dataset_size == 'full':
+            file_name = 'queries.csv'
+        elif dataset_size == 'small':
+            file_name = 'queries_small.csv'
+        elif dataset_size == 'selected':
+            file_name = 'queries_selected.csv'
+
+
+
+        df_path = os.path.expanduser(os.path.join(self.data_path, file_name))
+
+        print("Loading df_path from: ", df_path)
+
+        with open(df_path, 'r') as f:
+            df = pd.read_csv(f, index_col=None, keep_default_na=False)
+
+        df['image_id'] = df['image_name']
+        # df = pd.DataFrame(data["questions"])
+        df["image_path"] = df["image_name"].apply(
+            lambda x: f"images/{x}")
 
         # Annotations
-        if not testing:
-            path = os.path.expanduser(os.path.join(data_path, self.IMAGE_PATH[split][2]))
-            with open(path, 'r') as f:
-                data = json.load(f)
-            df_annotations = pd.DataFrame(data["annotations"])
-            df = pd.merge(df, df_annotations, left_on='question_id', right_on='question_id', how='left')
-            # Check if image_id are still correct, remove newly created columns with x and y ending and just use the name image_id
-            assert df["image_id_x"].tolist() == df[
-                "image_id_y"].tolist(), "image_id in df and df_annotations does not match."
-            df["image_id"] = df["image_id_x"]
-            del df["image_id_x"]
-            del df["image_id_y"]
-        df["mc_answer"] = df.answers.apply(most_common_from_dict_raw)
+        # if not testing:
+        #     path = os.path.expanduser(os.path.join(data_path, self.IMAGE_PATH[split][2]))
+        #     with open(path, 'r') as f:
+        #         data = json.load(f)
+        #     df_annotations = pd.DataFrame(data["annotations"])
+        #     df = pd.merge(df, df_annotations, left_on='question_id', right_on='question_id', how='left')
+        #     # Check if image_id are still correct, remove newly created columns with x and y ending and just use the name image_id
+        #     assert df["image_id_x"].tolist() == df[
+        #         "image_id_y"].tolist(), "image_id in df and df_annotations does not match."
+        #     df["image_id"] = df["image_id_x"]
+        #     del df["image_id_x"]
+        #     del df["image_id_y"]
+        # df["mc_answer"] = df.answers.apply(most_common_from_dict_raw)
         self.df = df
 
         if max_samples is not None:
@@ -161,6 +179,12 @@ class OKVQADataset(Dataset):
         image_id = self.df.iloc[index]["image_path"]
         image_path = os.path.expanduser(os.path.join(self.data_path, image_id))
         return image_path
+    
+    def get_sample_path(self, index):
+        sample_name = self.df.iloc[index][f"{self.input_type}_name"]
+        sample_path = os.path.expanduser(os.path.join(self.data_path, f"{self.input_type}s", sample_name))
+        # sample_path = self.data_path / f"{self.input_type}s" / sample_name
+        return sample_path
 
     def get_index_from_sample_id(self, sample_id):
         return self.df[self.df["sample_id"] == sample_id].index[0]
@@ -170,8 +194,8 @@ class OKVQADataset(Dataset):
         image_id = self.df.iloc[index]["image_id"]
         image_path = self.df.iloc[index]["image_path"]
         # question input
-        question_id = self.df.iloc[index]["question_id"]
-        question = self.df.iloc[index]["question"]
+        question_id = self.df.iloc[index]["sample_id"]
+        question = self.df.iloc[index]["query"]
         # # answer and question type
         # answer_type = self.df.iloc[index]["answer_type"]
         # question_type = self.df.iloc[index]["question_type"]
@@ -180,9 +204,8 @@ class OKVQADataset(Dataset):
         # specify target if available (i.e. answer)
         selected_answers = None
         if not self.testing:
-            answer_list = self.df.iloc[index]["answers"]  # Return whole list
-            selected_answers = self.answer_selection(
-                self.df.iloc[index]["answers"])  # Apply answer_selection() function to list of dict
+            answer_list = self.df.iloc[index]["answer"]  # Return whole list
+            selected_answers = self.df.iloc[index]["answer"]  # Apply answer_selection() function to list of dict
 
         # Load and transform image
         image_path = os.path.expanduser(os.path.join(self.data_path, image_path))
@@ -201,12 +224,12 @@ class OKVQADataset(Dataset):
 
         # Return
         if self.testing:
-            return {"sample_id": question_id, "img": img, "question": question, 'pil_img': pil_img, 'index': index,
-                    'possible_answers': [], 'info_to_prompt': question, 'question_type': -1}
+            return {"sample_id": question_id, "img": img, "question": question, 'pil_img': pil_img, 'index': index, "query": question, "image": img,
+                    "extra_context": '', "index": question_id, 'possible_answers': [], 'info_to_prompt': question, 'question_type': -1}
 
         else:
-            return {"sample_id": question_id, 'answer': selected_answers, "img": img, "question": question,
-                    'pil_img': pil_img, 'index': index, 'possible_answers': [], 'info_to_prompt': question,
+            return {"sample_id": question_id, 'answer': selected_answers, "img": img, "question": question, "query": question, "image": img,
+                    "extra_context": '', "index": question_id, 'pil_img': pil_img, 'index': index, 'possible_answers': [], 'info_to_prompt': question,
                     "question_type": -1}
 
     def post_process(self, prediction, stem=True):

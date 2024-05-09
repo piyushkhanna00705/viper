@@ -30,6 +30,9 @@ def get_dataset(config_dataset):
     elif dataset_name == 'MyDataset':
         from datasets.my_dataset import MyDataset
         dataset = MyDataset(**config_dataset)
+    elif dataset_name == 'V_Star':
+        from datasets.v_star import V_Star
+        dataset = V_Star(**config_dataset)
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
     return dataset
@@ -84,12 +87,17 @@ def accuracy(prediction, ground_truth, *args):
     Returns:
         score (float): Score of the prediction.
     """
+    # print("Predictions: ", prediction)
+    # print("Ground_truth: ", ground_truth)
+
     if len(prediction) == 0:  # if no prediction, return 0
         return 0
     assert len(prediction) == len(ground_truth)
     pred_gt_filtered = [(pred, gt) for pred, gt in zip(prediction, ground_truth) if gt != '']
     score = 0
     for p, g in pred_gt_filtered:
+        # print("P postprocessed= ", general_postprocessing(p))
+        # print("G= ", g)
         if general_postprocessing(p) == g:
             score += 1
     return score / len(pred_gt_filtered)

@@ -10,7 +10,7 @@ with open('api_key.json') as f:
     print(data['personal_org'])
     print(data['secret_key'])
     openai_client = OpenAI( 
-        organization= data['personal_org'],
+        organization= data['fried_nlp'],
         api_key= data['secret_key']
     )
 
