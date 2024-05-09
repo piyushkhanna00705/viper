@@ -65,7 +65,6 @@ temp_img/
 *.out
 *.txt
 
-api_key.json
 
 
 # PyInstaller
