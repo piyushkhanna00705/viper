@@ -1,8 +1,19 @@
-# ViperGPT: Visual Inference via Python Execution for Reasoning
+# ViperGPT with Visual Search Mechanism: Visual Inference via Python Execution for Reasoning
 
-This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
 
-![teaser](teaser.gif "Teaser")
+## Quickstart for Visual Search
+After installing all dependencies for the ViperGPT framework from the [original git repo](https://github.com/cvlab-columbia/viper/tree/main) and setting up [LLaVa](https://github.com/haotian-liu/LLaVA/tree/main) the ViperGPT with Hierarchical Visual Search for V*Bench dataset can be easily run using the following script:
+```sh run_main_batch.sh```
+
+To change the configurations for running on the V*Bench dataset, refer to the ```configs/v_star_config.yaml``` file.
+
+For checking out the prompting experiments with V*Bench, refer to ```prompts/benchmarks/v_star*``` files.
+
+
+
+
+
+
 
 ## Quickstart
 Clone recursively:
